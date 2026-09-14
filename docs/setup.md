@@ -23,6 +23,11 @@ and **Short** uses `├` / `└`, saving one column without removing indentation
 The config key is `branch_length = "standard"` (default) or `"short"`.
 Single-tab workspaces stay branch-free with either choice.
 
+**Pane name before task** shows a renamed pane as `{pane name} - {task}`, for
+example `architect - Fix landing page`. Panes without a name (set with
+`herdr pane rename`) keep the task alone, and a task that already starts with the
+name is not repeated. The config key is `pane_names = false` (default) or `true`.
+
 Ordering defaults to `order = "workspace"`. Choose `"activity"` to bring working
 workspace groups forward, followed by recent lifecycle activity. Tabs and agents
 stay together in their original order; Spaces is unchanged. The activity view

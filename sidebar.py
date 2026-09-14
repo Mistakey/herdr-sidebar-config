@@ -112,6 +112,15 @@ def task_label(pane, tabs):
         pane.get("agent"), f"{pane.get('agent', 'Agent')} session")
 
 
+def with_pane_name(pane, label):
+    """Prefix a pane's own name, unless the label already starts with it."""
+    name = (pane.get("name") or pane.get("label") or "").strip()
+    normalize = lambda text: text.replace("-", " ").casefold()
+    if not name or normalize(label).startswith(normalize(name)):
+        return label
+    return name + " - " + label
+
+
 def desired_headers(panes, workspaces):
     names = {w["workspace_id"]: w["label"] for w in workspaces}
     seen = set()
@@ -126,7 +135,7 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard"):
+def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard", pane_names=False):
     headers = desired_headers(panes, workspaces)
     groups = {}
     tab_ids = {}
@@ -182,7 +191,10 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             if status not in STATES:
                 status = "unknown"
             mark = working_glyph if status == "working" else STATES[status]
-            values[f"hs_{status}"] = mark + " " + task_label(pane, tabs)
+            label = task_label(pane, tabs)
+            if pane_names:
+                label = with_pane_name(pane, label)
+            values[f"hs_{status}"] = mark + " " + label
             previous = pane["pane_id"]
         # Mutually exclusive tokens let static Herdr styles dim a whole group.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
@@ -221,7 +233,8 @@ def refresh(clear=False, restore_view=False):
         animated = settings["animated_loaders"] and not clear
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
-                               branch_length=settings["branch_length"])
+                               branch_length=settings["branch_length"],
+                               pane_names=settings["pane_names"])
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []
