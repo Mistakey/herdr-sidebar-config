@@ -159,3 +159,8 @@ repeat installation, doctor, font rendering, and restoration of the original
 files were exercised there. Unit tests also cover single/multiple-tab transitions,
 unchanged metadata, unrelated settings, and refusal to overwrite later edits.
 macOS terminal rendering remains unverified.
+
+For a dated view of the whole system, the operational boundaries, and the
+questions that are still open, see [project knowledge](knowledge/README.md). Its
+facts are checked by `tools/check_knowledge_docs.py`, which the test suite runs as
+well.

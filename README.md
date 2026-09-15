@@ -119,6 +119,8 @@ Removal keeps your checkout and preferences. Setup refuses to overwrite managed
 files edited since installation. [Keeping custom edits and troubleshooting →](docs/setup.md)
 
 Contributing? Start with [AGENTS.md](AGENTS.md) and the [architecture guide](docs/architecture.md).
+The [project knowledge set](docs/knowledge/README.md) records what is authoritative,
+what was verified, and what is still open.
 
 ## Credits and license
 

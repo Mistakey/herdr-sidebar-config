@@ -1,0 +1,176 @@
+{
+  "$comment": "Machine-readable facts for the herdr-sidebar repository. Verified by tools/check_knowledge_docs.py (also run from tests/test_knowledge_docs.py). Update inspected_ref/verified_date and every claim you re-check.",
+  "inspected_ref": "8974a146fe9eb3ec69234a0169795b184cb0cb05",
+  "verified_date": "2026-09-15",
+  "plugin": {
+    "id": "testy-cool.herdr-sidebar",
+    "name": "Herdr Sidebar Config",
+    "version": "0.3.0",
+    "min_herdr_version": "0.8.2",
+    "platforms": ["linux", "macos"],
+    "manifest": "herdr-plugin.toml",
+    "publisher_source": "plugin:testy-cool.herdr-sidebar"
+  },
+  "runtime_constraints": {
+    "python": "3.11+ (tomllib); no third-party runtime dependencies",
+    "fontTools": "build/test only (requirements-font.txt, fonttools==4.63.0)",
+    "herdr_version_observed_locally": "0.8.2",
+    "python_observed_locally": "3.12.3 (3.11 is exercised only by CI)"
+  },
+  "hooks": {
+    "startup": ["run.sh --restore-view"],
+    "panes": ["settings (popup 68x18)"],
+    "actions": ["settings", "refresh", "clear"],
+    "events": ["pane.agent_detected", "pane.agent_status_changed", "pane.closed", "pane.exited", "pane.focused", "pane.moved", "tab.closed", "tab.created", "tab.focused", "tab.moved", "tab.renamed", "workspace.closed", "workspace.created", "workspace.renamed"],
+    "event_count": 14,
+    "absent_by_design": ["pane.updated"]
+  },
+  "modules": [
+    {"path": "sidebar.py", "role": "Publishes display rows, headings and tree prefixes; diffs against reported tokens", "key_symbols": ["desired_rows", "desired_headers", "task_label", "refresh", "changed_tokens"]},
+    {"path": "activity_titles.py", "role": "Native exact-session names for Codex, Claude and Pi from local metadata (512 KiB tail scan)", "key_symbols": ["activity_title", "_codex", "_claude", "_pi"]},
+    {"path": "ipc.py", "role": "One newline-delimited JSON request over the Herdr Unix socket; 2 s timeout, 4 MiB reply cap", "key_symbols": ["call"]},
+    {"path": "deadline.py", "role": "Single scheduler: quiet-period deadlines plus optional animation frames; also spawns itself", "key_symbols": ["address", "ensure_timer", "run"]},
+    {"path": "inactivity.py", "role": "Pure quiet-period state machine returning dimmed workspaces and the next deadline", "key_symbols": ["update_inactivity"]},
+    {"path": "animation.py", "role": "Braille loader styles, frame cache and per-frame token patch", "key_symbols": ["STYLES", "INTERVAL", "glyph", "cache_rows", "publish_frame"]},
+    {"path": "ordering.py", "role": "Whole-workspace activity ordering plus the Herdr agent-view override", "key_symbols": ["order_groups", "apply_view"]},
+    {"path": "preferences.py", "role": "User-owned preferences: defaults, validation, comment-preserving patch, atomic save", "key_symbols": ["DEFAULTS", "validate", "patch", "save"]},
+    {"path": "settings_ui.py", "role": "Dependency-free curses settings popup; applies changes synchronously", "key_symbols": ["FIELDS", "open_popup", "editor"]},
+    {"path": "runtime.py", "role": "Herdr binary discovery, CLI wrapper, icon mode selection, provider logo maps", "key_symbols": ["PLUGIN_ID", "PUA_LOGOS", "TEXT_LOGOS", "icon_mode", "logo_for"]},
+    {"path": "configuration.py", "role": "TOML surgery: layout merge, Spaces dimming rows, settings shortcut, Ghostty mapping", "key_symbols": ["merge_layout", "dimmable_spaces", "settings_binding", "ghostty_mapping"]},
+    {"path": "setup_sidebar.py", "role": "install/uninstall/doctor with a backup record and a changed-since-install guard", "key_symbols": ["plan", "install", "uninstall", "doctor", "edited_files"]}
+  ],
+  "tests": [
+    {"path": "tests/test_sidebar_rows.py", "locks": "Row tree, group gap, dim variants, task-label fallbacks, compact single-tab rows"},
+    {"path": "tests/test_group_headers.py", "locks": "Heading follows the first live agent; a former heading is cleared"},
+    {"path": "tests/test_activity_titles.py", "locks": "Codex/Claude/Pi native title precedence and rejection of weak names"},
+    {"path": "tests/test_inactivity.py", "locks": "Quiet-period boundary, working resets, corrupt/backwards state"},
+    {"path": "tests/test_ordering.py", "locks": "Workspace activity order, native ties, owner-scoped view override"},
+    {"path": "tests/test_animation.py", "locks": "Frame styles stay in one braille cell; frame writes touch only the working token"},
+    {"path": "tests/test_runtime.py", "locks": "Icon mode fallbacks, deleted-binary suffix, hs_title is never published"},
+    {"path": "tests/test_preferences.py", "locks": "Comment-preserving patch, concurrent-edit refusal, shortcut claim"},
+    {"path": "tests/test_configuration.py", "locks": "Layout merge idempotence, unsupported forms refused, change guard"},
+    {"path": "tests/test_font.py", "locks": "Codepoint order, committed fonts equal a fresh build, fixed pitch"},
+    {"path": "tests/test_branch_length.py", "locks": "Standard/short selection removes exactly one cell"},
+    {"path": "tests/test_pane_names.py", "locks": "Renamed panes prefix the task; already-prefixed labels are untouched"},
+    {"path": "tests/test_agy_icon.py", "locks": "AGY mark and label; Ghostty mapping upgrade is single-line and idempotent"},
+    {"path": "tests/test_knowledge_docs.py", "locks": "This knowledge set: links, anchors, placeholders and registry facts"}
+  ],
+  "tools": [
+    {"path": "tools/build_font.py", "role": "Deterministic base font from font/codepoints.toml + assets/svg (output dist/HerdrHarnessLogos-Regular.ttf)"},
+    {"path": "tools/build_sidebar_font.py", "role": "Derives the shipped font: enlarges claude/codex/agy, renames the family (output dist/HerdrSidebarLogos-Regular.ttf)"},
+    {"path": "tools/check_knowledge_docs.py", "role": "Validates knowledge-doc links, anchors, placeholders and registry facts"}
+  ],
+  "preferences": [
+    {"key": "order", "default": "workspace", "values": ["workspace", "activity"], "popup": "Order", "doc": "docs/setup.md#files-setup-manages", "readme": true},
+    {"key": "icons", "default": "auto", "values": ["auto", "font", "text"], "popup": "Icons", "doc": "docs/setup.md#files-setup-manages", "readme": true},
+    {"key": "inactive_after_seconds", "default": 600, "values": [600], "popup": "Dim after (minutes)", "doc": "docs/knowledge/evidence.md#contradictions", "readme": true, "note": "The config key itself is named in no user-facing doc; the popup shows minutes and stores seconds."},
+    {"key": "animated_loaders", "default": false, "values": [false, true], "popup": "Animated loaders", "doc": "docs/setup.md#files-setup-manages", "readme": true},
+    {"key": "loader_style", "default": "dots", "values": ["dots", "orbit", "pulse"], "popup": "Loader style", "doc": "docs/setup.md#files-setup-manages", "readme": true},
+    {"key": "branch_length", "default": "standard", "values": ["standard", "short"], "popup": "Branch length", "doc": "docs/setup.md#files-setup-manages", "readme": true},
+    {"key": "pane_names", "default": false, "values": [false, true], "popup": "Pane name before task", "doc": "docs/setup.md#files-setup-manages", "readme": false}
+  ],
+  "tokens": [
+    {"name": "hs_group", "meaning": "Workspace heading on its first agent", "consumed_by": "layout"},
+    {"name": "hs_group_dim", "meaning": "Dimmed workspace heading for quiet workspaces", "consumed_by": "layout"},
+    {"name": "hs_tab", "meaning": "Tab heading on its first agent, when the workspace has more than one actual tab", "consumed_by": "layout"},
+    {"name": "hs_tab_dim", "meaning": "Dimmed tab heading", "consumed_by": "layout"},
+    {"name": "hs_logo", "meaning": "Indentation, optional branch and provider mark for unfocused agent rows", "consumed_by": "layout"},
+    {"name": "hs_logo_dim", "meaning": "Dimmed variant of hs_logo", "consumed_by": "layout"},
+    {"name": "hs_logo_focus", "meaning": "hs_logo replacement for the focused agent, carrying the U+258C focus bar", "consumed_by": "none", "note": "Published by the runtime but referenced by no row in sidebar-layout.toml; see evidence.md contradiction C1"},
+    {"name": "hs_gap", "meaning": "Braille blank row after the last agent of a workspace", "consumed_by": "layout"},
+    {"name": "hs_terminals", "meaning": "Names of terminal-only tabs in the workspace", "consumed_by": "layout"},
+    {"name": "hs_workspace_rank", "meaning": "Hidden 12-digit rank used by the activity agent-view sort", "consumed_by": "view"},
+    {"name": "hs_title", "meaning": "User-owned title override; read but never written or cleared", "consumed_by": "user"},
+    {"name": "hs_space", "meaning": "Workspace label in Spaces while the workspace is active", "consumed_by": "spaces"},
+    {"name": "hs_space_dim", "meaning": "Workspace label in Spaces while the workspace is quiet", "consumed_by": "spaces"},
+    {"name": "hs_working", "meaning": "Working status mark plus task label (animated when loaders are on)", "consumed_by": "layout"},
+    {"name": "hs_working_dim", "meaning": "Dimmed working row", "consumed_by": "layout"},
+    {"name": "hs_blocked", "meaning": "Blocked status mark plus task label", "consumed_by": "layout"},
+    {"name": "hs_blocked_dim", "meaning": "Dimmed blocked row (gray, not red)", "consumed_by": "layout"},
+    {"name": "hs_done", "meaning": "Done status mark plus task label", "consumed_by": "layout"},
+    {"name": "hs_done_dim", "meaning": "Dimmed done row (gray, not green)", "consumed_by": "layout"},
+    {"name": "hs_idle", "meaning": "Idle status mark plus task label", "consumed_by": "layout"},
+    {"name": "hs_idle_dim", "meaning": "Dimmed idle row", "consumed_by": "layout"},
+    {"name": "hs_unknown", "meaning": "Unknown status mark plus task label", "consumed_by": "layout"},
+    {"name": "hs_unknown_dim", "meaning": "Dimmed unknown row", "consumed_by": "layout"}
+  ],
+  "status_glyphs": {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"},
+  "spacers": {"indent": "U+2800 braille blank", "focus_bar": "U+258C", "tree": "├─ / └─ (short: ├ / └)"},
+  "providers": [
+    {"agent": "claude", "codepoint": "E1A0", "text_label": "C", "svg": "assets/svg/claude.svg", "layout_accent": "#E68A67"},
+    {"agent": "codex", "codepoint": "E1A1", "text_label": "AI", "svg": "assets/svg/codex.svg", "layout_accent": "#A78BFA"},
+    {"agent": "opencode", "codepoint": "E1A2", "text_label": "OC", "svg": "assets/svg/opencode.svg", "layout_accent": null},
+    {"agent": "omp", "codepoint": "E1A3", "text_label": "OMP", "svg": "assets/svg/omp.svg", "layout_accent": null},
+    {"agent": "cline", "codepoint": "E1A4", "text_label": "CL", "svg": "assets/svg/cline.svg", "layout_accent": null},
+    {"agent": "mastracode", "codepoint": "E1A5", "text_label": "MC", "svg": "assets/svg/mastracode.svg", "layout_accent": null},
+    {"agent": "kimi", "codepoint": "E1A6", "text_label": "KIM", "svg": "assets/svg/kimi.svg", "layout_accent": null},
+    {"agent": "kilo", "codepoint": "E1A7", "text_label": "KIL", "svg": "assets/svg/kilo.svg", "layout_accent": null},
+    {"agent": "maki", "codepoint": "E1A8", "text_label": "MAK", "svg": "assets/svg/maki.svg", "layout_accent": null},
+    {"agent": "agy", "codepoint": "E1A9", "text_label": "AGY", "svg": "assets/svg/agy.svg", "layout_accent": "#6EA8FE"}
+  ],
+  "unknown_agent_mark": "◇",
+  "palette": ["#A8ADB9", "#F08080", "#91C788", "#6EA8FE", "#E68A67", "#A78BFA"],
+  "fonts": [
+    {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.0.0", "sha256": "910335c407dfa5c4f78f28895836b85c92eff6154c634ced292bc8845466591b", "shipped": true},
+    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "fee6ea4d8cb5463249c5b2e71facbc3eacdc2b03ba5a5c6cfdb69d5c6efbc1a2", "shipped": false}
+  ],
+  "loader_styles": {"dots": 10, "orbit": 8, "pulse": 12, "frames_per_second": 8},
+  "env": [
+    {"name": "HERDR_PLUGIN_STATE_DIR", "role": "Plugin state dir (locks, activity.json, view.json, deadline.log); required to run"},
+    {"name": "HERDR_PLUGIN_CONFIG_DIR", "role": "Plugin config dir holding the preferences config.toml"},
+    {"name": "HERDR_PLUGIN_ID", "role": "Metadata source suffix; defaults to the plugin id"},
+    {"name": "HERDR_SOCKET_PATH", "role": "Herdr server socket for direct IPC"},
+    {"name": "HERDR_BIN_PATH", "role": "Herdr binary path; a ' (deleted)' suffix is stripped"},
+    {"name": "HERDR_ENV", "role": "Setup refuses to run unless it is 1"},
+    {"name": "HERDR_CONFIG_PATH", "role": "Default for --config; --config must equal it"},
+    {"name": "XDG_CONFIG_HOME", "role": "Base for default Herdr and Ghostty config paths"},
+    {"name": "CODEX_HOME", "role": "Overrides ~/.codex for Codex title lookups"},
+    {"name": "CLAUDE_CONFIG_DIR", "role": "Overrides ~/.claude for Claude title lookups"},
+    {"name": "PI_CODING_AGENT_DIR", "role": "Overrides ~/.pi/agent for Pi session names"}
+  ],
+  "managed_paths": [
+    {"name": "herdr-layout", "path": "$HERDR_CONFIG_PATH", "probe": ["ROOT / \"sidebar-layout.toml\""], "written": "settings_binding(merge_layout(...))"},
+    {"name": "plugin-preferences", "path": "$HERDR_PLUGIN_CONFIG_DIR/config.toml", "probe": ["config_dir / \"config.toml\""], "written": "icons preference only; user_editable in the backup record"},
+    {"name": "ghostty-config", "path": "$XDG_CONFIG_HOME/ghostty/config", "probe": ["ghostty_mapping"], "written": "font-codepoint-map for U+E1A0-U+E1A9; skipped with --text"},
+    {"name": "font", "path": "$HOME/.local/share/fonts/HerdrSidebarLogos-Regular.ttf", "probe": ["\"dist\" / FONT"], "written": "byte copy of the shipped font; skipped with --text"}
+  ],
+  "setup_cli": {
+    "commands": ["install", "uninstall", "doctor"],
+    "flags": ["--dry-run", "--json", "--text", "--config", "--ghostty-config", "--font-dir", "--state-dir"],
+    "exit_codes": {"0": "success", "1": "setup error or a doctor check needing attention", "2": "invalid CLI arguments (argparse)"},
+    "status_values": ["planned", "installed", "removed", "ok", "needs_attention", "error"],
+    "backup_record": "<state dir>/install.json with files[{before, installed_sha256, user_editable?}] and created_link; renamed to uninstalled.json after removal",
+    "guard": "install and uninstall refuse to overwrite managed files whose bytes changed since installation; --dry-run returns before the guard"
+  },
+  "doctor_checks": ["plugin_enabled", "layout_matches", "workspace_dimming", "workspace_sort", "latest_hook_succeeded", "preferences_valid", "icon_mode_valid", "font_installed (font mode only)", "ghostty_mapping (font mode only)"],
+  "verification": {
+    "unit_tests": "python3 -m unittest discover -s tests -v",
+    "unit_tests_full": ".venv-font/bin/python -m unittest discover -s tests -v",
+    "knowledge_docs": "python3 tools/check_knowledge_docs.py",
+    "observed_2026_09_15": "58 tracked tests OK (3 font tests skipped without fontTools); 0 skipped under .venv-font; CI matrix ubuntu+macos x Python 3.11, 3.13"
+  },
+  "live_deployment": {
+    "config": "~/.config/herdr/config.toml",
+    "state_dir": "~/.local/state/herdr/plugins/testy-cool.herdr-sidebar",
+    "plugin_config": "~/.config/herdr/plugins/config/testy-cool.herdr-sidebar/config.toml",
+    "observed_2026_09_15": "Installed layout equals the repository layout plus $hs_logo_focus in all four agent rows; the config hash no longer matches the backup record, so install and uninstall would refuse with 'Files changed since setup' until the edit is reconciled",
+    "unknowns": ["whether the installed Herdr renders a token no row declares", "macOS live rendering"]
+  },
+  "evidence": [
+    {"id": "E1", "claim": "The plugin publishes only changed hs_* keys per pane and workspace and never writes hs_title or other plugins' tokens", "source": "sidebar.py:246-268, tests/test_runtime.py:29-36", "class": "observed", "confidence": "high", "next": "none"},
+    {"id": "E2", "claim": "The shipped layout consumes every published token except hs_logo_focus and hs_workspace_rank", "source": "sidebar-layout.toml, sidebar.py:152-239", "class": "observed", "confidence": "high", "next": "Confirm the rendered focused row in an isolated session"},
+    {"id": "E3", "claim": "The focused-row token was never added to the layout: all three focus commits touched only sidebar.py", "source": "git show --stat ab9b806 c7f5097 4352afa; git log -S hs_logo_focus -- sidebar-layout.toml (empty)", "class": "observed", "confidence": "high", "next": "Decide whether to add the row (owner decision)"},
+    {"id": "E4", "claim": "Herdr 0.8.2 is installed and the manifest requires 0.8.2+", "source": "herdr --version output; herdr-plugin.toml:4", "class": "observed", "confidence": "high", "next": "none"},
+    {"id": "E5", "claim": "The bundled fonts are byte-reproducible from tracked sources", "source": "sha256 of dist/*.ttf vs a rebuild in the pinned fonttools environment; tests/test_font.py:72-84; CI git diff --exit-code -- dist/", "class": "observed", "confidence": "high", "next": "none"},
+    {"id": "E6", "claim": "Animation runs at 8 fps and touches only hs_working/hs_working_dim with a single registry lookup per frame", "source": "animation.py:5-42, deadline.py:53-70, tests/test_animation.py", "class": "observed", "confidence": "high", "next": "Re-measure cost at 8 fps (the table in docs/architecture.md is a 4 fps baseline)"},
+    {"id": "E7", "claim": "The installer records a backup before writing and refuses to overwrite files edited since installation", "source": "setup_sidebar.py:95-150, docs/setup.md#manual-removal", "class": "observed", "confidence": "high", "next": "Exercise install/doctor/uninstall in a scratch config root"},
+    {"id": "E8", "claim": "The live install record's config hash differs from the current Herdr config, so install and uninstall would refuse today", "source": "~/.config/herdr/herdr-sidebar-setup/install.json vs sha256 of ~/.config/herdr/config.toml (2026-09-15)", "class": "observed", "confidence": "high", "next": "Reconcile the live config with its backup, then re-run install and doctor"},
+    {"id": "E9", "claim": "test_activity_titles covers Codex/Claude/Pi precedence, but no test covers refresh(), ipc.call, deadline.run or the settings popup", "source": "tests/*.py inventory", "class": "observed", "confidence": "high", "next": "Add a scratch harness that stubs run_herdr/ipc.call and asserts refresh() argv"},
+    {"id": "E10", "claim": "The README settings table omits pane_names and no user doc names inactive_after_seconds", "source": "README.md:70-77 vs settings_ui.py:8-14, preferences.py:10-12, docs/setup.md:9-11", "class": "observed", "confidence": "high", "next": "Patch the table (owner decision)"},
+    {"id": "E11", "claim": "docs/architecture.md documents the icon font range as U+E1A0-U+E1A8 (nine marks) while the code, font data and setup docs use ten through U+E1A9", "source": "docs/architecture.md:131 vs runtime.py:13-15, font/codepoints.toml, docs/setup.md:97", "class": "observed", "confidence": "high", "next": "Correct the line (owner decision)"},
+    {"id": "E12", "claim": "Pi is handled as a title source but has no icon or text label, so Pi rows show the generic mark", "source": "activity_titles.py:167 vs runtime.py:13-17", "class": "observed", "confidence": "high", "next": "Check the agent id Herdr reports for Pi, then add a mark or document the fallback"},
+    {"id": "E13", "claim": "Coarse platform support is documented but macOS live rendering was never verified; CI runs unit tests only", "source": "README.md:41-42, docs/architecture.md:161, .github/workflows/checks.yml", "class": "historical", "confidence": "high", "next": "Run install/doctor and capture the sidebar on macOS"},
+    {"id": "E14", "claim": "The performance table in docs/architecture.md is an explicitly historical 4 fps baseline, not a measurement of the current 8 fps styles", "source": "docs/architecture.md:107-123 with animation.py:10", "class": "historical", "confidence": "high", "next": "Re-measure or date-qualify the table"},
+    {"id": "E15", "claim": "The animated performance and many-agent cost are unmeasured for the current styles, and Python 3.11 has no local run", "source": "no benchmark artifact in the repo; local interpreters are 3.12.3", "class": "unknown", "confidence": "medium", "next": "Run the CI matrix locally via uv or docker for 3.11, and re-measure with several working agents"}
+  ]
+}

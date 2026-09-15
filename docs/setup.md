@@ -3,6 +3,9 @@
 Use the [README quick start](../README.md#install) for the supported installation
 flow. Run setup from the same checkout and Herdr session each time.
 
+Operational boundaries, live-verification steps and recovery procedures are in
+[the runbooks](knowledge/runbooks.md).
+
 ## Files setup manages
 
 Open **Sidebar settings** from the command palette or press `prefix+,` (setup
