@@ -311,11 +311,15 @@ def tab_changes(tabs, context):
 def sleeping_label(workspace_id, context):
     titles = []
     seen = set()
+    count = 0
     for record in context.get("records", {}).values():
         tab_id = record.get("tab_id")
         if record.get("workspace_id") == workspace_id and record.get("sleeping"):
+            count += 1
             title = short_title(record["title"])
             if (tab_id, title) not in seen:
                 titles.append(title)
                 seen.add((tab_id, title))
-    return "💤 " + ", ".join(titles) if titles else None
+    if not count:
+        return None
+    return f"{count} sleeping agent{'s' if count != 1 else ''} · " + ", ".join(titles)

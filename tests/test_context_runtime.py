@@ -75,7 +75,8 @@ class ContextRuntimeTests(unittest.TestCase):
         self.snapshot['tabs'][0]['label'] = '💤 Repair export handling'
         self.calls.clear()
         refresh()
-        self.assertEqual(self.snapshot['workspaces'][0]['tokens']['hs_parked'], '💤 Repair export handling')
+        self.assertEqual(self.snapshot['workspaces'][0]['tokens']['hs_parked'],
+                         '1 sleeping agent · Repair export handling')
         self.assertTrue(self.context()['records']['w1:p1']['sleeping'])
         self.assertTrue(all(call[:2] in [('api', 'snapshot'), ('pane', 'report-metadata'),
                                          ('workspace', 'report-metadata')] for call in self.calls))

@@ -92,7 +92,7 @@ class ConversationContextTests(unittest.TestCase):
         parked = {'w1:p1': {'agent': 'codex', 'uuid': 'session-1', 'workspace_id': 'w1',
                             'tab_id': 'w1:t1', 'cwd': '/demo/project'}}
         sleeping = collect([shell], gap, parked, now=3)
-        self.assertEqual(sleeping_label('w1', sleeping), '💤 Verify Dify cleanup plan')
+        self.assertEqual(sleeping_label('w1', sleeping), '1 sleeping agent · Verify Dify cleanup plan')
         self.assertEqual(sleeping['records']['w1:p1']['recorded_at'], 1)
         self.assertNotIn('agent', shell)
         self.assertFalse(collect([self.pane], sleeping, {}, now=4)['records']['w1:p1']['sleeping'])
@@ -126,7 +126,7 @@ class ConversationContextTests(unittest.TestCase):
         record = {'agent': 'codex', 'uuid': 'session-1',
                   'tab_id': 'w1:t1', 'cwd': '/demo/project'}
         context = collect([shell], {}, {'w1:p1': record}, now=1)
-        self.assertEqual(sleeping_label('w1', context), '💤 Verify Dify cleanup plan')
+        self.assertEqual(sleeping_label('w1', context), '1 sleeping agent · Verify Dify cleanup plan')
         self.assertEqual(context['records']['w1:p1']['workspace_id'], 'w1')
         for key, value in [('workspace_id', 'w2'), ('workspace_id', None),
                            ('tab_id', 'w2:t1'), ('cwd', '/another/project')]:
@@ -134,6 +134,15 @@ class ConversationContextTests(unittest.TestCase):
                 stale = dict(record, **{key: value})
                 self.assertEqual(collect([shell], {}, {'w1:p1': stale}, now=2)['records'], {})
         self.assertEqual(collect([shell], {}, {'w2:p1': record}, now=2)['records'], {})
+
+    def test_sleeping_count_counts_panes_even_when_their_titles_are_shared(self):
+        record = {'workspace_id': 'w1', 'tab_id': 'w1:t1', 'sleeping': True,
+                  'title': 'Verify Dify cleanup plan'}
+        context = {'records': {'w1:p1': record, 'w1:p2': dict(record),
+                               'w1:p3': dict(record, sleeping=False),
+                               'w2:p1': dict(record, workspace_id='w2', tab_id='w2:t1')}}
+        self.assertEqual(sleeping_label('w1', context), '2 sleeping agents · Verify Dify cleanup plan')
+        self.assertIsNone(sleeping_label('w3', context))
 
     def test_reused_and_closed_panes_do_not_inherit_old_context(self):
         self.history()

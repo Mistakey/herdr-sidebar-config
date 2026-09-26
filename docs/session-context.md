@@ -19,8 +19,10 @@ Select its tab in Spaces and use **Show saved conversation context** (plugin
 action `context`). The popup shows full titles, latest meaningful requests,
 native lifecycle status or validated Hibernate sleeping state, source and recorded
 time. Requests wrap and scroll. Esc closes without resuming. It does not infer
-results or next steps. Sleeping titles also appear in a Spaces row without an
-Agents-panel anchor; sleeping panes remain terminals.
+results or next steps. A Spaces row shows the sleeping-agent count and titles,
+for example `1 sleeping agent · Check exports`. Other agents in that workspace
+can still be active. Sleeping panes remain terminals without an Agents-panel
+anchor.
 
 ## Local data
 
