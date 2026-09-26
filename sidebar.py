@@ -228,7 +228,7 @@ def refresh(clear=False, restore_view=False):
         tabs = {t["tab_id"]: t["label"] for t in snapshot["tabs"]}
         settings_path = Path(os.environ.get("HERDR_PLUGIN_CONFIG_DIR", str(state))) / "config.toml"
         settings = load_preferences(settings_path)
-        from conversation_context import collect, hibernate_records, read_json, save_json, tab_changes, sleeping_label
+        from conversation_context import collect, hibernate_records, read_json, save_json, tab_changes
         context_path = state / "context.json"
         context = collect(panes, read_json(context_path), hibernate_records(), now=time.time()) if not clear else {}
         if settings["conversation_titles"] and not clear:
@@ -277,7 +277,7 @@ def refresh(clear=False, restore_view=False):
             dim = wid in activity.inactive_ids
             wanted = {"hs_space": None if dim else workspace["label"],
                       "hs_space_dim": workspace["label"] if dim else None,
-                      "hs_parked": sleeping_label(wid, context) if not clear else None}
+                      "hs_parked": None}
             if clear:
                 wanted = dict.fromkeys(wanted)
             changes = changed_tokens(workspace.get("tokens") or {}, wanted)

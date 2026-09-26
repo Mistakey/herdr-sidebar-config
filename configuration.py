@@ -30,7 +30,7 @@ def settings_binding(text):
 
 
 def dimmable_spaces(spaces):
-    """Retain user rows and spacing; add quiet labels and sleeping context."""
+    """Retain user rows and spacing; add quiet labels and remove retired context rows."""
     result = copy.deepcopy(spaces or {"rows": [["state_icon", "workspace"], ["branch", "git_status"]]})
     rows = result.get("rows", [["state_icon", "workspace"], ["branch", "git_status"]])
     result["rows"] = []
@@ -38,16 +38,16 @@ def dimmable_spaces(spaces):
         tokens = []
         for token in row:
             name = token if isinstance(token, str) else token.get("token")
+            if name == "$hs_parked":
+                continue
             if name == "workspace":
                 style = {} if isinstance(token, str) else dict(token)
                 tokens += [dict(style, token="$hs_space", dim=False),
                            dict(style, token="$hs_space_dim", dim=True)]
             else:
                 tokens.append(token)
-        result["rows"].append(tokens)
-    if not any((token if isinstance(token, str) else token.get("token")) == "$hs_parked"
-               for row in result["rows"] for token in row):
-        result["rows"].append([{"token": "$hs_parked", "dim": False}])
+        if tokens or not row:
+            result["rows"].append(tokens)
     return result
 
 

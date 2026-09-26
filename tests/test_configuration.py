@@ -3,7 +3,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from configuration import ghostty_mapping, merge_layout
+from configuration import dimmable_spaces, ghostty_mapping, merge_layout
 from setup_sidebar import digest, edited_files
 
 FRAGMENT = (Path(__file__).resolve().parents[1] / "sidebar-layout.toml").read_text()
@@ -30,8 +30,7 @@ command = "my-action"
         self.assertEqual(parsed["theme"], {"name": "custom"})
         self.assertEqual(parsed["ui"]["sidebar_width"], 42)
         self.assertEqual(parsed["ui"]["sidebar"]["spaces"], {"rows": [[
-            {"token": "$hs_space", "dim": False}, {"token": "$hs_space_dim", "dim": True}],
-            [{"token": "$hs_parked", "dim": False}]]})
+            {"token": "$hs_space", "dim": False}, {"token": "$hs_space_dim", "dim": True}]]})
         self.assertEqual(parsed["keys"], tomllib.loads(original)["keys"])
         self.assertIn("# personal theme", result)
         self.assertEqual(merge_layout(result, FRAGMENT), result)
@@ -39,6 +38,18 @@ command = "my-action"
     def test_empty_config_is_valid(self):
         result = merge_layout("", FRAGMENT)
         self.assertEqual(tomllib.loads(result)["ui"]["agent_panel_sort"], "spaces")
+
+    def test_retired_sleeping_rows_are_removed_without_changing_user_rows(self):
+        spaces = {"rows": [["state_icon", "workspace"], [],
+                           [{"token": "$hs_parked", "dim": False}],
+                           ["$hs_parked", {"token": "branch", "dim": True}],
+                           ["git_status"]], "separator": " | "}
+        result = dimmable_spaces(spaces)
+        self.assertEqual(result, {"rows": [["state_icon",
+            {"token": "$hs_space", "dim": False}, {"token": "$hs_space_dim", "dim": True}],
+            [], [{"token": "branch", "dim": True}], ["git_status"]], "separator": " | "})
+        self.assertEqual(dimmable_spaces(result), result)
+        self.assertEqual(spaces["rows"][2], [{"token": "$hs_parked", "dim": False}])
 
     def test_unsupported_inline_table_fails_without_changing_input(self):
         original = 'ui = { agent_panel_sort = "priority", sidebar = { agents = { rows = [["agent"]] } } }\n'
