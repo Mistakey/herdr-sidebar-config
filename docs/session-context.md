@@ -37,8 +37,10 @@ and recorded time, without full conversations or Hibernate resume commands.
 Closed panes are pruned; reused panes cannot inherit another session's context.
 The agent-exit gap retains a private record without prematurely showing sleep.
 
-Hibernate's `~/.config/herdr-hibernate/state.json` is read-only. Pane, tab,
-workspace and cwd must match before accepting its session record. Existing
+Hibernate's `~/.config/herdr-hibernate/state.json` is read-only. Pane, tab and cwd
+must match before accepting its session record. Workspace identity comes from
+Herdr's native pane; if Hibernate records a workspace, that must match too.
+This also supports older Hibernate records without a workspace field. Existing
 sleeping sessions recover context from saved conversations on first install.
 `HERDR_SIDEBAR_HIBERNATE_STATE` overrides the path for isolated testing. Delete
 the cache when its retained request text is no longer wanted; provider files are

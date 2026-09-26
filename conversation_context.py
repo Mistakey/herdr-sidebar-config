@@ -177,7 +177,11 @@ def parked_session(pane, parked):
     rec = parked.get(pane.get("pane_id"))
     if pane.get("agent") or not isinstance(rec, dict):
         return None
-    if any(rec.get(key) != pane.get(key) for key in ("workspace_id", "tab_id", "cwd")):
+    if any(rec.get(key) != pane.get(key) for key in ("tab_id", "cwd")):
+        return None
+    # Older Hibernate records link the pane and tab without a workspace field.
+    # Keep the workspace from Herdr's native pane; reject an explicit mismatch.
+    if "workspace_id" in rec and rec["workspace_id"] != pane.get("workspace_id"):
         return None
     value = rec.get("uuid")
     agent = rec.get("agent")

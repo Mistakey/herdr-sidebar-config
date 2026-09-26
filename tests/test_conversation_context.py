@@ -119,6 +119,22 @@ class ConversationContextTests(unittest.TestCase):
         parked['w1:p1']['cwd'] = '/other/project'
         self.assertEqual(collect([shell], {}, parked, now=4)['records'], {})
 
+    def test_legacy_hibernate_record_uses_native_workspace_and_checks_record_links(self):
+        self.history()
+        shell = {k: v for k, v in self.pane.items() if k not in ('agent', 'agent_session')}
+        # Hibernate 1.1.1 on macOS records the pane key, tab and cwd, but no workspace.
+        record = {'agent': 'codex', 'uuid': 'session-1',
+                  'tab_id': 'w1:t1', 'cwd': '/demo/project'}
+        context = collect([shell], {}, {'w1:p1': record}, now=1)
+        self.assertEqual(sleeping_label('w1', context), '💤 Verify Dify cleanup plan')
+        self.assertEqual(context['records']['w1:p1']['workspace_id'], 'w1')
+        for key, value in [('workspace_id', 'w2'), ('workspace_id', None),
+                           ('tab_id', 'w2:t1'), ('cwd', '/another/project')]:
+            with self.subTest(key=key, value=value):
+                stale = dict(record, **{key: value})
+                self.assertEqual(collect([shell], {}, {'w1:p1': stale}, now=2)['records'], {})
+        self.assertEqual(collect([shell], {}, {'w2:p1': record}, now=2)['records'], {})
+
     def test_reused_and_closed_panes_do_not_inherit_old_context(self):
         self.history()
         old = collect([self.pane], {}, {}, now=1)
