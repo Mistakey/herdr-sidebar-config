@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import sqlite3
 import tempfile
+import unicodedata
 
 from activity_titles import MAX_BYTES, SESSION_ID, _clean, _records, activity_title
 
@@ -99,7 +100,8 @@ def latest_request(pane):
             if not isinstance(header, dict):
                 return None
             agent = pane.get("agent")
-            identity = (header.get("payload") or {}).get("id") if agent == "codex" else header.get("id")
+            payload = header.get("payload")
+            identity = payload.get("id") if agent == "codex" and isinstance(payload, dict) else header.get("id")
             if agent in ("codex", "pi") and (not isinstance(identity, str)
                     or (session.get("kind", "id") == "id" and identity != value)):
                 return None
@@ -184,6 +186,20 @@ def parked_session(pane, parked):
     return {"kind": "id", "agent": agent, "value": value}
 
 
+def session_identity(provider, session):
+    kind, value = session.get("kind", "id"), session["value"]
+    if provider == "pi" and kind in ("path", "file"):
+        try:
+            with Path(value).open("rb") as stream:
+                header = json.loads(stream.readline(16384))
+            if (isinstance(header, dict) and header.get("type") == "session"
+                    and isinstance(header.get("id"), str) and SESSION_ID.fullmatch(header["id"])):
+                return [provider, "id", header["id"]]
+        except (OSError, ValueError, UnicodeError):
+            pass
+    return [provider, kind, value]
+
+
 def collect(panes, previous, parked, *, now):
     """Cache title/request facts, pruning closed/reused panes and stale sessions."""
     records = {}
@@ -203,27 +219,32 @@ def collect(panes, previous, parked, *, now):
         provider = pane.get("agent") or session.get("agent")
         if session.get("agent", provider) != provider:
             continue
+        identity = session_identity(provider, session)
         reader = dict(pane, agent=provider, agent_session=session)
         saved = old.get(pane["pane_id"], {})
         if not isinstance(saved, dict):
             saved = {}
-        same = (saved.get("provider") == provider and saved.get("session") == session
+        same = (saved.get("provider") == provider and saved.get("identity") == identity
                 and saved.get("cwd") == pane.get("cwd"))
         sleeping = not pane.get("agent")
         if sleeping and same:
             record = dict(saved)
         else:
-            native = _clean((pane.get("tokens") or {}).get("hs_title"), reader) or activity_title(reader)
+            override = (pane.get("tokens") or {}).get("hs_title")
+            override = CONTROL.sub("", " ".join(override.split())) if isinstance(override, str) else None
+            native = override or activity_title(reader)
             request = latest_request(reader)
             title = native or request
+            source = "user title" if override else "saved title" if native else "user request"
             if not title:
                 if not same:
                     continue
                 title, request = saved.get("title"), saved.get("request")
+                source = saved.get("source", "saved conversation")
                 if not title:
                     continue
-            record = {"provider": provider, "session": session, "cwd": pane.get("cwd"),
-                      "title": title, "request": request, "source": "saved title" if native else "user request",
+            record = {"provider": provider, "session": session, "identity": identity, "cwd": pane.get("cwd"),
+                      "title": title, "request": request, "source": source,
                       "recorded_at": saved.get("recorded_at", now) if same and saved.get("title") == title
                       and saved.get("request") == request else now}
         record.update(workspace_id=pane["workspace_id"], tab_id=pane.get("tab_id"), sleeping=sleeping, detached=False)
@@ -234,10 +255,18 @@ def collect(panes, previous, parked, *, now):
 
 def short_title(value, limit=40):
     text = CONTROL.sub("", " ".join(value.split()))
-    if len(text) <= limit:
+    def width(char):
+        return 0 if unicodedata.combining(char) else 2 if unicodedata.east_asian_width(char) in ("W", "F") else 1
+    if sum(width(c) for c in text) <= limit:
         return text
-    cut = text[:limit - 1].rsplit(" ", 1)[0]
-    return (cut or text[:limit - 1]) + "…"
+    used, prefix = 0, ""
+    for char in text:
+        used += width(char)
+        if used > limit - 1:
+            break
+        prefix += char
+    cut = prefix.rsplit(" ", 1)[0]
+    return (cut or prefix).rstrip() + "…"
 
 
 def tab_changes(tabs, context):
@@ -251,6 +280,9 @@ def tab_changes(tabs, context):
     for tab in tabs:
         tab_id, label = tab["tab_id"], tab["label"]
         before = owned.get(tab_id)
+        if before and not isinstance(before, dict):
+            owned.pop(tab_id)
+            before = None
         if before and label != before.get("label") and not label.startswith("💤"):
             del owned[tab_id]
             before = None
@@ -259,11 +291,14 @@ def tab_changes(tabs, context):
         records = [r for r in context["records"].values() if r.get("tab_id") == tab_id and not r.get("detached")]
         if not records or any(r.get("sleeping") for r in records):
             continue
-        # Different assignments in one tab do not imply a shared goal.
-        titles = {short_title(r["title"]) for r in records}
-        if len(titles) != 1:
-            continue
-        title = titles.pop()
+        # List distinct goals rather than inventing an umbrella objective.
+        titles = list(dict.fromkeys(r["title"] for r in records))
+        if len(titles) == 1:
+            title = short_title(titles[0])
+        else:
+            suffix = f" +{len(titles) - 2}" if len(titles) > 2 else ""
+            limit = (40 - len(suffix) - 3) // 2
+            title = " / ".join(short_title(t, limit) for t in titles[:2]) + suffix
         if title != label:
             result.append((tab_id, label, title))
     return result

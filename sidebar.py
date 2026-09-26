@@ -84,6 +84,9 @@ def task_label(pane, tabs):
     tokens = pane.get("tokens") or {}
     if tokens.get("hs_title"):
         return tokens["hs_title"]
+    saved = pane.get("saved_context")
+    if isinstance(saved, dict) and saved.get("title") and not saved.get("detached"):
+        return saved["title"]
     native = activity_title(pane)
     if native:
         return native
@@ -225,6 +228,22 @@ def refresh(clear=False, restore_view=False):
         tabs = {t["tab_id"]: t["label"] for t in snapshot["tabs"]}
         settings_path = Path(os.environ.get("HERDR_PLUGIN_CONFIG_DIR", str(state))) / "config.toml"
         settings = load_preferences(settings_path)
+        from conversation_context import collect, hibernate_records, read_json, save_json, tab_changes, sleeping_label
+        context_path = state / "context.json"
+        context = collect(panes, read_json(context_path), hibernate_records(), now=time.time()) if not clear else {}
+        if settings["conversation_titles"] and not clear:
+            for tab_id, previous_label, title in tab_changes(snapshot["tabs"], context):
+                # A user rename can race the snapshot. Never overwrite it.
+                current = run_herdr(herdr, "tab", "get", tab_id)["result"]["tab"]
+                if current.get("label") != previous_label:
+                    context["owned_tabs"].pop(tab_id, None)
+                    continue
+                run_herdr(herdr, "tab", "rename", tab_id, title)
+                context["owned_tabs"][tab_id] = {"label": title}
+                tabs[tab_id] = title
+        if not clear:
+            save_json(context_path, context)
+            panes = [dict(pane, saved_context=context["records"].get(pane["pane_id"])) for pane in panes]
         activity = update_inactivity([w["workspace_id"] for w in workspaces], panes,
                                      read_state(state / "activity.json"), now=time.time(),
                                      timeout=settings.get("inactive_after_seconds", 600))
@@ -257,7 +276,8 @@ def refresh(clear=False, restore_view=False):
             wid = workspace["workspace_id"]
             dim = wid in activity.inactive_ids
             wanted = {"hs_space": None if dim else workspace["label"],
-                      "hs_space_dim": workspace["label"] if dim else None}
+                      "hs_space_dim": workspace["label"] if dim else None,
+                      "hs_parked": sleeping_label(wid, context) if not clear else None}
             if clear:
                 wanted = dict.fromkeys(wanted)
             changes = changed_tokens(workspace.get("tokens") or {}, wanted)
@@ -287,12 +307,18 @@ def main():
     parser.add_argument("--settings", action="store_true", help="run the settings popup")
     parser.add_argument("--settings-open", action="store_true", help="open the settings popup")
     parser.add_argument("--restore-view", action="store_true", help="restore saved ordering on startup")
+    parser.add_argument("--context", action="store_true", help="show saved conversation context")
+    parser.add_argument("--context-open", action="store_true", help="open saved context for the selected tab")
     args = parser.parse_args()
     if not os.environ.get("HERDR_PLUGIN_STATE_DIR"):
         raise RuntimeError("Run through Herdr: herdr plugin action invoke refresh --plugin " + PLUGIN_ID)
     if args.settings or args.settings_open:
         import settings_ui
         settings_ui.open_popup() if args.settings_open else settings_ui.main()
+        return
+    if args.context or args.context_open:
+        import context_ui
+        context_ui.open_popup() if args.context_open else context_ui.main()
         return
     refresh(args.clear, restore_view=args.restore_view)
 

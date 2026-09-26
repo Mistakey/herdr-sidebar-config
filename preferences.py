@@ -9,7 +9,7 @@ import tomllib
 
 DEFAULTS = {"icons": "auto", "inactive_after_seconds": 600, "order": "workspace",
             "animated_loaders": False, "loader_style": "dots", "branch_length": "standard",
-            "pane_names": False}
+            "pane_names": False, "conversation_titles": False}
 
 
 def settings_path():
@@ -30,6 +30,8 @@ def validate(values):
         raise ValueError("Branch length must be standard or short.")
     if not isinstance(result["pane_names"], bool):
         raise ValueError("Pane names must be on or off.")
+    if not isinstance(result["conversation_titles"], bool):
+        raise ValueError("Conversation tab titles must be on or off.")
     delay = result["inactive_after_seconds"]
     if isinstance(delay, bool) or not isinstance(delay, (int, float)) or not math.isfinite(delay) or delay <= 0:
         raise ValueError("Dimming delay must be a positive number of minutes.")

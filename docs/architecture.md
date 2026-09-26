@@ -53,6 +53,11 @@ are skipped. Other cases use the existing terminal title, then tab, pane, and
 provider fallbacks. These are deterministic local heuristics, not conversation
 analysis or a model call.
 
+Saved conversation context extends these exact-session reads to generic tab
+names and a read-only popup. Hibernate records link sleeping conversations, and
+a Spaces row shows their titles without an agent anchor. See
+[saved conversation context](session-context.md) for storage and ownership rules.
+
 ## Token contract
 
 Publisher: `plugin:testy-cool.herdr-sidebar`.

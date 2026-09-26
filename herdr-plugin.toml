@@ -13,8 +13,23 @@ id = "settings"
 title = "Sidebar settings"
 placement = "popup"
 width = 68
-height = 18
+height = 20
 command = ["sh", "run.sh", "--settings"]
+
+[[panes]]
+id = "context"
+title = "Saved conversation context"
+placement = "popup"
+width = 80
+height = 24
+command = ["sh", "run.sh", "--context"]
+
+[[actions]]
+id = "context"
+title = "Show saved conversation context"
+description = "Read the selected tab's saved title and request without waking agents."
+contexts = ["global", "pane"]
+command = ["sh", "run.sh", "--context-open"]
 
 [[actions]]
 id = "settings"

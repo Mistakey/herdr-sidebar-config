@@ -64,6 +64,8 @@ class ConversationContextTests(unittest.TestCase):
         self.assertEqual(latest_request(self.pane), 'Repair export handling')
         path.write_text(path.read_text().replace('session-1', 'session-2'))
         self.assertIsNone(latest_request(self.pane))
+        path.write_text(json.dumps({'type': 'session_meta', 'payload': []}) + '\n')
+        self.assertIsNone(latest_request(self.pane))
 
     def test_claude_and_pi_read_user_messages_without_scanning_other_sessions(self):
         claude = dict(self.pane, agent='claude', agent_session={'kind': 'id', 'value': 'session-1'})
@@ -81,6 +83,7 @@ class ConversationContextTests(unittest.TestCase):
 
     def test_cache_survives_release_park_and_wake_without_inventing_state(self):
         self.history()
+        self.pane['agent_session']['source'] = 'herdr:codex'
         active = collect([self.pane], {}, {}, now=1)
         shell = {k: v for k, v in self.pane.items() if k not in ('agent', 'agent_session')}
         gap = collect([shell], active, {}, now=2)
@@ -93,6 +96,18 @@ class ConversationContextTests(unittest.TestCase):
         self.assertEqual(sleeping['records']['w1:p1']['recorded_at'], 1)
         self.assertNotIn('agent', shell)
         self.assertFalse(collect([self.pane], sleeping, {}, now=4)['records']['w1:p1']['sleeping'])
+
+    def test_pi_path_identity_matches_parked_uuid_without_rereading_history(self):
+        path = self.write('pi.jsonl', [{'type': 'session', 'id': 'session-1'},
+                                     {'type': 'session_info', 'name': 'Saved Pi objective'}])
+        pane = dict(self.pane, agent='pi', agent_session={'kind': 'path', 'agent': 'pi', 'value': str(path)})
+        active = collect([pane], {}, {}, now=1)
+        shell = {k: v for k, v in pane.items() if k not in ('agent', 'agent_session')}
+        parked = {'w1:p1': {'agent': 'pi', 'uuid': 'session-1', 'workspace_id': 'w1',
+                            'tab_id': 'w1:t1', 'cwd': '/demo/project'}}
+        with patch('conversation_context.latest_request', side_effect=AssertionError('must use saved context')):
+            sleeping = collect([shell], active, parked, now=2)
+        self.assertEqual(sleeping['records']['w1:p1']['title'], 'Saved Pi objective')
 
     def test_first_install_recovers_a_sleeping_conversation_from_hibernate(self):
         self.history()
@@ -113,11 +128,11 @@ class ConversationContextTests(unittest.TestCase):
 
     def test_unchanged_observation_keeps_saved_time_and_uses_manual_title(self):
         self.history()
-        pane = dict(self.pane, tokens={'hs_title': 'My saved objective'})
+        pane = dict(self.pane, tokens={'hs_title': 'project'})
         first = collect([pane], {}, {}, now=1)
         second = collect([pane], first, {}, now=10)
         self.assertEqual(first, second)
-        self.assertEqual(second['records']['w1:p1']['title'], 'My saved objective')
+        self.assertEqual(second['records']['w1:p1']['title'], 'project')
 
     def test_only_generic_or_unchanged_owned_tabs_are_renamed(self):
         self.history()
@@ -136,7 +151,10 @@ class ConversationContextTests(unittest.TestCase):
         self.history()
         context = collect([self.pane], {}, {}, now=1)
         context['records']['w1:p2'] = dict(context['records']['w1:p1'], title='Another assignment')
-        self.assertEqual(tab_changes([{'tab_id': 'w1:t1', 'label': 'main'}], context), [])
+        change = tab_changes([{'tab_id': 'w1:t1', 'label': 'main'}], context)[0]
+        self.assertIn(' / ', change[2])
+        self.assertIn('Another', change[2])
+        self.assertLessEqual(len(change[2]), 40)
 
     def test_context_file_is_private_atomic_and_unchanged_refresh_does_not_write(self):
         path = self.home / 'state/context.json'
@@ -151,3 +169,4 @@ class ConversationContextTests(unittest.TestCase):
         path.write_text('x' * 100)
         self.assertEqual(read_json(path, limit=10), {})
         self.assertLessEqual(len(short_title('One useful objective ' * 10)), 40)
+        self.assertLessEqual(len(short_title('任務' * 30)), 20)
