@@ -83,9 +83,14 @@ U+2800, a blank braille cell, preserves indentation through metadata whitespace
 trimming. It is a spacer, not a loader. Herdr's first and continuation rows have
 different native offsets, so the prefix arithmetic is intentional.
 
-`inactivity.py` preserves a quiet start per workspace. Any working agent clears
-it; focus and title changes do not. At 600 seconds, refresh switches the label,
-heading, tab and agent tokens to their dim variants. Native lifecycle symbols
+`inactivity.py` preserves quiet starts per workspace and per idle or unknown
+agent. A working agent clears its own timer and the workspace timer; the other
+agents keep theirs. New or replaced sessions start a fresh quiet period.
+Focus and title changes do not reset these timers. After
+600 seconds, idle or unknown agents dim independently while an active workspace's
+label and shared headings stay bright. Questions and unseen completions retain
+their native marks within active workspaces. A wholly quiet workspace still dims
+its label, headings and all agent rows. Native lifecycle symbols
 in Spaces retain their meaning. `deadline.py` holds a single process lock and
 waits on a private Unix datagram socket until the earliest deadline. Refreshes
 reschedule that wait; no deadlines means exit. Removal clears both pane and

@@ -24,8 +24,10 @@ Titles and states are demonstration data; the plugin and rendering are real.
   status marks and stop animation redraws.
 - **Inactive spaces and agents fade into the background.** After a workspace
   has no working agents for ten minutes, its name in **Spaces** and its heading
-  and agent rows in **Agents** dim together. They brighten as soon as any agent
-  in that workspace starts working. Change the delay in Settings. This is visual
+  and agent rows in **Agents** dim together. Idle agents also fade independently
+  while another agent in the workspace works; questions and unseen completions
+  stay visible. Each agent brightens when it starts working, along with its
+  workspace. Change the delay in Settings. This is visual
   dimming—not hibernation or stopping agents.
 
 ### Before and after

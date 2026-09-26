@@ -138,7 +138,7 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard", pane_names=False):
+def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard", pane_names=False, inactive_pane_ids=frozenset()):
     headers = desired_headers(panes, workspaces)
     groups = {}
     tab_ids = {}
@@ -199,10 +199,16 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
                 label = with_pane_name(pane, label)
             values[f"hs_{status}"] = mark + " " + label
             previous = pane["pane_id"]
-        # Mutually exclusive tokens let static Herdr styles dim a whole group.
+        dim_group = pane["workspace_id"] in inactive_ids
+        dim_agent = dim_group or pane["pane_id"] in inactive_pane_ids
+        if dim_agent and values["hs_logo_focus"]:
+            values["hs_logo"] = values["hs_logo_focus"]
+            values["hs_logo_focus"] = None
+        # Keep shared headings bright while another agent is active.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
-            values[key + "_dim"] = values[key] if pane["workspace_id"] in inactive_ids else None
-            if pane["workspace_id"] in inactive_ids:
+            dim = dim_group if key in {"hs_group", "hs_tab"} else dim_agent
+            values[key + "_dim"] = values[key] if dim else None
+            if dim:
                 values[key] = None
         result[pane["pane_id"]] = values
     return result
@@ -253,7 +259,8 @@ def refresh(clear=False, restore_view=False):
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
                                branch_length=settings["branch_length"],
-                               pane_names=settings["pane_names"])
+                               pane_names=settings["pane_names"],
+                               inactive_pane_ids=activity.inactive_pane_ids)
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []

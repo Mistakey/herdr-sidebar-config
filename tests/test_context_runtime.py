@@ -94,6 +94,31 @@ class ContextRuntimeTests(unittest.TestCase):
         self.assertEqual(self.context(), before)
         self.assertEqual(self.snapshot['panes'][0]['tokens'], {'hs_title': 'My objective', 'other_plugin': 'keep'})
 
+    def test_refresh_uses_individual_deadline_with_a_working_peer(self):
+        pane = dict(self.snapshot['panes'][0], pane_id='w1:p2', tokens={})
+        worker = dict(self.snapshot['agents'][0], pane_id='w1:p2', agent_status='working',
+                      agent_session={'kind': 'id', 'agent': 'codex', 'value': 'session-2'})
+        self.snapshot['panes'].append(pane)
+        self.snapshot['agents'].append(worker)
+        with patch('sidebar.time.time', return_value=1000):
+            refresh()
+        activity = json.loads((self.root / 'state/activity.json').read_text())
+        self.assertEqual(activity['next_deadline'], 1600)
+        with patch('sidebar.time.time', return_value=1600):
+            refresh()
+        idle_tokens = self.snapshot['panes'][0]['tokens']
+        self.assertIn('hs_idle_dim', idle_tokens)
+        self.assertNotIn('hs_idle', idle_tokens)
+        self.assertEqual(idle_tokens['hs_group'], 'Demo')
+        self.assertIn('hs_working', self.snapshot['panes'][1]['tokens'])
+        self.assertEqual(self.snapshot['workspaces'][0]['tokens']['hs_space'], 'Demo')
+        self.assertIsNone(json.loads((self.root / 'state/activity.json').read_text())['next_deadline'])
+        self.snapshot['agents'][0]['agent_status'] = 'working'
+        with patch('sidebar.time.time', return_value=1601):
+            refresh()
+        self.assertNotIn('hs_idle_dim', idle_tokens)
+        self.assertIn('hs_working', idle_tokens)
+
     def test_opt_in_and_tab_rename_race_are_respected(self):
         self.preferences.write_text('icons = "text"\n')
         refresh()

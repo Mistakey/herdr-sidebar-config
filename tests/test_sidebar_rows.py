@@ -118,6 +118,31 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertIsNone(rows["w1:p2"]["hs_tab"])
         self.assertIsNone(rows["w1:p3"]["hs_tab"])
 
+    def test_idle_agent_fades_without_dimming_shared_headings_or_working_peer(self):
+        panes = [
+            {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "codex", "agent_status": "idle", "focused": True},
+            {"pane_id": "w1:p2", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "claude", "agent_status": "working"},
+            {"pane_id": "w1:p3", "workspace_id": "w1", "tab_id": "w1:t2"},
+        ]
+        spaces = [{"workspace_id": "w1", "label": "project"}]
+        tabs = {"w1:t1": "main", "w1:t2": "shell"}
+        faded = desired_rows(panes, spaces, tabs, inactive_pane_ids={"w1:p1"})
+        self.assertEqual(faded["w1:p1"]["hs_group"], "project")
+        self.assertEqual(faded["w1:p1"]["hs_tab"], "main")
+        self.assertIsNone(faded["w1:p1"]["hs_idle"])
+        self.assertTrue(faded["w1:p1"]["hs_idle_dim"].startswith("○ "))
+        self.assertIsNone(faded["w1:p1"]["hs_logo_focus"])
+        self.assertIn("▌", faded["w1:p1"]["hs_logo_dim"])
+        self.assertTrue(faded["w1:p2"]["hs_working"].startswith("◔ "))
+        self.assertIsNone(faded["w1:p2"]["hs_working_dim"])
+        bright = desired_rows(panes, spaces, tabs)
+        changes = changed_tokens(faded["w1:p1"], bright["w1:p1"])
+        self.assertIsNone(changes["hs_idle_dim"])
+        self.assertIsNone(changes["hs_logo_dim"])
+        self.assertIsNotNone(changes["hs_logo_focus"])
+
     def test_single_tab_uses_compact_rows_until_a_second_tab_exists(self):
         panes = [
             {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "codex"},
