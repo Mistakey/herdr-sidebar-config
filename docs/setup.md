@@ -111,21 +111,6 @@ installed on that machine too. Run setup there, inside one of its own Herdr
 panes. On Windows, run it with the interpreter's absolute path when `python`
 could resolve to several installs.
 
-When this client's machine catalog (`client/endpoints.json` under Herdr's
-state directory) has an enabled remote, a blank row follows this machine's
-last agent, where the first remote's entries begin. It appears only in
-workspace order; the activity order interleaves machines. Known limits:
-
-- With three or more machines, only the boundary after this machine is
-  marked; the plugin cannot see other machines' entries.
-- An offline or empty first remote still gets the blank row.
-- The blank row assumes Herdr's `agent_panel_sort = "spaces"`, which setup sets;
-  `priority` sorting mixes machines.
-- Catalog changes appear at the next normal refresh.
-- The blank row is a pane token, and every client shows a pane's tokens as
-  that server's plugin wrote them. If a remote machine has an enabled remote of
-  its own, you also see a blank row after that machine's agents.
-
 ## Manual installation
 
 Use this when preserving a customized sidebar, installing on another terminal,

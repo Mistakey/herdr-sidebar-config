@@ -12,7 +12,7 @@ from inactivity import update_inactivity
 from activity_titles import activity_title
 from preferences import load as load_preferences
 from ordering import order_groups, apply_view
-from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, remote_machine, run_herdr
+from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, run_herdr
 
 STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"}
 # A braille blank occupies a terminal cell but survives metadata trimming.
@@ -150,16 +150,8 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def machine_boundary(order):
-    # Herdr lists Local's entries before the first remote's only in native
-    # order; the activity view interleaves machines, so a gap would stray.
-    return order == "workspace" and remote_machine() is not None
-
-
-def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔",
-                 branch_length="standard", divide_machines=False):
+def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard"):
     headers = desired_headers(panes, workspaces)
-    last_agent = next((p["pane_id"] for p in reversed(panes) if p.get("agent")), None)
     groups = {}
     tab_ids = {}
     for pane in panes:
@@ -216,10 +208,6 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             mark = working_glyph if status == "working" else STATES[status]
             values[f"hs_{status}"] = mark + " " + task_label(pane, tabs)
             previous = pane["pane_id"]
-            # Every row belongs to an entry and takes its dimming and selection,
-            # so only a blank row separates this machine from the next one.
-            if divide_machines and pane["pane_id"] == last_agent:
-                values["hs_gap"] = BLANK
         # Mutually exclusive tokens let static Herdr styles dim a whole group.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
             values[key + "_dim"] = values[key] if pane["workspace_id"] in inactive_ids else None
@@ -256,8 +244,7 @@ def refresh(clear=False, restore_view=False):
         animated = settings["animated_loaders"] and not clear
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
-                               branch_length=settings["branch_length"],
-                               divide_machines=not clear and machine_boundary(settings["order"]))
+                               branch_length=settings["branch_length"])
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []
