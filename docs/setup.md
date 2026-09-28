@@ -103,6 +103,14 @@ Doctor reads the stable, Preview, and unpackaged `settings.json` and reports
 With `icons = "auto"`, Windows chooses font mode when a font registration names
 **Herdr Sidebar Logos** and its file exists.
 
+## Remote machines
+
+Each Herdr server decorates only its own panes: a machine attached with
+`herdr machine` shows its agents in your sidebar only after the plugin is
+installed on that machine too. Run setup there, inside one of its own Herdr
+panes. On Windows, run it with the interpreter's absolute path when `python`
+could resolve to several installs.
+
 ## Manual installation
 
 Use this when preserving a customized sidebar, installing on another terminal,
