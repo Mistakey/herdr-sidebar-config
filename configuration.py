@@ -5,6 +5,9 @@ import copy
 import re
 import tomllib
 
+import host
+from runtime import PLUGIN_ID
+
 HEADERS = re.compile(r"(?m)^[ \t]*(\[\[?[^\]\n]+\]\]?)[ \t]*(?:#.*)?$")
 
 
@@ -20,7 +23,7 @@ def settings_binding(text):
     if claimed(parsed.get("keys", {})):
         return text
     addition = ('\n[[keys.command]]\nkey = "prefix+comma"\ntype = "plugin_action"\n'
-                'command = "testy-cool.herdr-sidebar.settings"\ndescription = "Sidebar settings"\n')
+                f'command = "{PLUGIN_ID}.{host.entry("settings")}"\ndescription = "Sidebar settings"\n')
     result = text.rstrip() + "\n" + addition
     expected = copy.deepcopy(parsed)
     expected.setdefault("keys", {}).setdefault("command", []).append(tomllib.loads(addition)["keys"]["command"][0])
@@ -117,9 +120,11 @@ def merge_layout(text, fragment):
     return result
 
 
+GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos"
+
+
 def ghostty_mapping(text):
     text = text.replace("U+E1A0-U+E1A8=Herdr Sidebar Logos", "U+E1A0-U+E1A9=Herdr Sidebar Logos")
-    mapping = "font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos"
-    if mapping in text.splitlines():
+    if GHOSTTY_MAPPING in text.splitlines():
         return text
-    return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + mapping + "\n"
+    return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + GHOSTTY_MAPPING + "\n"
