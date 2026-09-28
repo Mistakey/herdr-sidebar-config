@@ -183,7 +183,7 @@ def edited_files(state, restoring=False):
     def edited(entry, current):
         if current is None:
             return not (restoring and "before" in entry and entry["before"] is None)
-        before = entry.get("before") and base64.b64decode(entry["before"])
+        before = None if entry.get("before") is None else base64.b64decode(entry["before"])
         return digest(current) != entry["installed_sha256"] and current != before
     return [path for path, entry in state["files"].items()
             if not entry.get("user_editable") and edited(entry, read(Path(path)))]
@@ -221,8 +221,10 @@ def uninstall(args, binary):
         if info["enabled"]:
             invoke(binary, host.entry("clear"))
         run_herdr(binary, "plugin", "disable", PLUGIN_ID)
-    font = fonts(args)
-    font.release()
+    # A --text install never touched the font or its registration.
+    font = fonts(args) if "font" in state or str(args.font_dir / FONT) in state["files"] else None
+    if font:
+        font.release()
     for path, entry in state["files"].items():
         if entry.get("user_editable"):
             continue
@@ -231,9 +233,11 @@ def uninstall(args, binary):
         else:
             write(Path(path), base64.b64decode(entry["before"]))
     reload_config(binary)
+    if font:
+        font.unregister(state.get("font", {}).get("prior"))
+    # Last, so a failed step above leaves the record for a retry.
     # Retain the disabled registration so uninstall never deletes the user's checkout.
     record.replace(record.with_name("uninstalled.json"))
-    font.unregister(state.get("font", {}).get("prior"))
     emit({"status": "removed", "message": "Original files restored; Herdr Sidebar disabled.",
           "notes": ["The checkout remains available. You can remove it when you no longer need it."]}, args.json)
 

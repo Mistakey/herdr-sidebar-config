@@ -59,6 +59,20 @@ class LockTests(unittest.TestCase):
                 self.assertFalse(first.acquire(blocking=False))
             first.close()
 
+    def test_close_frees_the_lock_at_once(self):
+        # The scheduler's non-blocking acquire runs right after a probe closes.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "test.lock")
+            for _ in range(20):
+                probe = host.Lock(path)
+                self.assertTrue(probe.acquire(blocking=False))
+                probe.close()
+                other = host.Lock(path)
+                try:
+                    self.assertTrue(other.acquire(blocking=False))
+                finally:
+                    other.close()
+
 
 class WakeTests(unittest.TestCase):
     def test_wake_round_trip(self):

@@ -72,6 +72,13 @@ class RestoreTests(unittest.TestCase):
             path.write_bytes(b"edited\n")
             self.assertEqual(edited_files(state), [str(path)])
 
+    def test_empty_original_restored_is_not_an_edit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_bytes(b"")
+            state = {"files": {str(path): {"before": "", "installed_sha256": "installed"}}}
+            self.assertEqual(edited_files(state, restoring=True), [])
+
     def test_retried_removal_accepts_a_created_file_already_gone(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "python-path.txt"

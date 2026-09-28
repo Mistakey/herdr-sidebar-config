@@ -7,6 +7,7 @@ overlapped so every step has the same bounded timeout as the POSIX socket.
 import _winapi
 from contextlib import contextmanager
 import ctypes
+import errno
 import msvcrt
 import os
 from pathlib import Path
@@ -21,24 +22,32 @@ import winreg
 ERROR_BROKEN_PIPE = 109
 ERROR_PIPE_BUSY = 231
 ERROR_IO_PENDING = 997
-ERROR_MORE_DATA = 234
 WAIT_TIMEOUT = 258
 POLL = 0.01
 
 
 class Lock:
-    """Locks one byte at offset zero; the handle's close releases it."""
+    """Locks one byte at offset zero.
+
+    Closing a handle releases its lock only "in an unspecified time", so close
+    unlocks explicitly: a scheduler started right after a probe must find the
+    lock free.
+    """
 
     def __init__(self, path):
         self._fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_BINARY, 0o666)
+        self._held = False
 
     def acquire(self, blocking=True):
         while True:
             os.lseek(self._fd, 0, os.SEEK_SET)
             try:
                 msvcrt.locking(self._fd, msvcrt.LK_NBLCK, 1)
+                self._held = True
                 return True
-            except OSError:
+            except OSError as error:
+                if error.errno not in (errno.EACCES, errno.EDEADLOCK):
+                    raise
                 if not blocking:
                     return False
             # msvcrt's own blocking mode gives up after ten seconds.
@@ -47,9 +56,12 @@ class Lock:
     def release(self):
         os.lseek(self._fd, 0, os.SEEK_SET)
         msvcrt.locking(self._fd, msvcrt.LK_UNLCK, 1)
+        self._held = False
 
     def close(self):
         if self._fd is not None:
+            if self._held:
+                self.release()
             os.close(self._fd)
             self._fd = None
 
