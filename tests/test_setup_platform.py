@@ -13,7 +13,7 @@ import host
 from configuration import settings_binding
 from runtime import FONT_FAMILY, icon_mode
 import setup_sidebar
-from setup_sidebar import edited_files, plan
+from setup_sidebar import ROOT, digest, edited_files, plan, restorations
 
 WINDOWS = os.name == "nt"
 
@@ -78,6 +78,34 @@ class RestoreTests(unittest.TestCase):
             path.write_bytes(b"")
             state = {"files": {str(path): {"before": "", "installed_sha256": "installed"}}}
             self.assertEqual(edited_files(state, restoring=True), [])
+
+    def test_removal_keeps_edits_a_repeat_install_merged(self):
+        # install, switch theme, repeat install (records the merged file), uninstall.
+        import base64
+        from configuration import merge_layout, settings_binding
+        fragment = (ROOT / "sidebar-layout.toml").read_text(encoding="utf-8")
+        before = '[theme]\nname = "tokyo-night"\n'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            merged = settings_binding(merge_layout(before.replace("tokyo-night", "dracula"), fragment))
+            path.write_bytes(merged.encode())
+            state = {"files": {str(path): {"before": base64.b64encode(before.encode()).decode(),
+                                           "installed_sha256": digest(merged.encode())}}}
+            restored = restorations(state, path)[str(path)]
+            self.assertEqual(tomllib.loads(restored.decode()), {"theme": {"name": "dracula"}})
+
+    def test_unchanged_config_is_restored_byte_for_byte(self):
+        import base64
+        from configuration import merge_layout, settings_binding
+        fragment = (ROOT / "sidebar-layout.toml").read_text(encoding="utf-8")
+        before = b'# mine\n[theme]\nname = "a"\n'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            installed = settings_binding(merge_layout(before.decode(), fragment)).encode()
+            path.write_bytes(installed)
+            state = {"files": {str(path): {"before": base64.b64encode(before).decode(),
+                                           "installed_sha256": digest(installed)}}}
+            self.assertEqual(restorations(state, path)[str(path)], before)
 
     def test_retried_removal_accepts_a_created_file_already_gone(self):
         with tempfile.TemporaryDirectory() as directory:

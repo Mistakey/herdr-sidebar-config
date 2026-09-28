@@ -8,7 +8,7 @@ import tomllib
 import host
 from runtime import PLUGIN_ID
 
-HEADERS = re.compile(r"(?m)^[ \t]*(\[\[?[^\]\n]+\]\]?)[ \t]*(?:#.*)?$")
+HEADERS = re.compile(r"(?m)^[ \t]*(\[\[?[^\]\r\n]+\]\]?)[ \t]*(?:#[^\r\n]*)?\r?$")
 
 
 def settings_binding(text):
@@ -92,7 +92,7 @@ def merge_layout(text, fragment):
     # Keep unrelated tables, comments, keybindings, and terminal settings intact.
     result = text
     for start, end, name in reversed(sections(text)):
-        if name == "ui.sidebar.spaces" or name == "ui.sidebar.agents" or name.startswith("ui.sidebar.agents."):
+        if _owned(name):
             result = result[:start] + result[end:]
     ui_section = next(((a, b) for a, b, name in sections(result) if name == "ui"), None)
     if ui_section:
@@ -153,17 +153,19 @@ def restore_layout(text, original, fragment):
     if not ui and "ui" not in before:
         expected.pop("ui")
     added = not any(_binding(original[a:b]) for a, b, name in sections(original) if name == "keys.command")
-    commands = expected.get("keys", {}).get("command", [])
-    if added:
-        commands[:] = [c for c in commands if not str(c.get("command", "")).startswith(PLUGIN_ID + ".")]
-        if not commands and "command" not in before.get("keys", {}):
-            expected["keys"].pop("command", None)
-            if not expected["keys"] and "keys" not in before:
+    keys = expected.get("keys", {})
+    if added and "command" in keys:
+        keys["command"] = [c for c in keys["command"] if not str(c.get("command", "")).startswith(PLUGIN_ID + ".")]
+        if not keys["command"] and "command" not in before.get("keys", {}):
+            keys.pop("command")
+            if not keys and "keys" not in before:
                 expected.pop("keys")
 
     # The fragment's leading comment travels with it; it now heads no table.
     preamble = fragment[:next(HEADERS.finditer(fragment)).start()].strip()
-    result = text if not preamble or preamble in original else text.replace(preamble + "\n", "", 1)
+    result = text
+    if preamble and preamble not in original:
+        result = re.sub(r"(?m)^" + re.escape(preamble) + r"\r?\n", "", result, count=1)
     for start, end, name in reversed(sections(result)):
         if _owned(name) or (added and name == "keys.command" and _binding(result[start:end])):
             result = result[:start] + result[end:]
@@ -172,8 +174,8 @@ def restore_layout(text, original, fragment):
     for start, end, name in sections(result):
         if name == "ui":
             block = setting.sub(old.group(0) if old else "", result[start:end], count=1)
-            # setup created this [ui] only to hold the sort order.
-            if not old and "ui" not in before and not block.partition("\n")[2].strip():
+            # setup wrote this [ui] header only to hold the sort order.
+            if not any(name == "ui" for _, _, name in sections(original)) and not block.partition("\n")[2].strip():
                 block = ""
             result = result[:start] + block + result[end:]
             break
