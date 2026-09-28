@@ -271,6 +271,10 @@ def config_home():
     return Path(os.environ["APPDATA"]) / "herdr"
 
 
+def state_home():
+    return Path(os.environ["LOCALAPPDATA"]) / "herdr"
+
+
 def font_dir():
     return Path(os.environ["LOCALAPPDATA"]) / "Microsoft" / "Windows" / "Fonts"
 

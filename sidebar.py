@@ -12,13 +12,15 @@ from inactivity import update_inactivity
 from activity_titles import activity_title
 from preferences import load as load_preferences
 from ordering import order_groups, apply_view
-from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, run_herdr
+from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, remote_machine, run_herdr
 
 STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"}
 # A braille blank occupies a terminal cell but survives metadata trimming.
 BLANK = "\u2800"
 # Left-edge marker for the focused agent; BLANK keeps unfocused rows aligned.
 FOCUS_BAR = "\u258c"
+# Herdr always names the client's own machine "Local".
+LOCAL_MACHINE = "Local"
 HISTORY = {
     "codex": (".codex/history.jsonl", "session_id", "text"),
     "claude": (".claude/history.jsonl", "sessionId", "display"),
@@ -150,8 +152,16 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard"):
+def machine_remote(order):
+    # Herdr lists Local's entries before the first remote's only in native
+    # order; the activity view interleaves machines, so headings would stray.
+    return remote_machine() if order == "workspace" else None
+
+
+def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔",
+                 branch_length="standard", remote=None):
     headers = desired_headers(panes, workspaces)
+    agent_ids = [pane["pane_id"] for pane in panes if pane.get("agent")]
     groups = {}
     tab_ids = {}
     for pane in panes:
@@ -165,7 +175,8 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
     for pane in panes:
         heading = headers[pane["pane_id"]]
         values = {"hs_group": heading, "hs_tab": None, "hs_logo_focus": None,
-                  "hs_gap": None, "hs_logo": None, "hs_terminals": None}
+                  "hs_gap": None, "hs_logo": None, "hs_terminals": None,
+                  "hs_machine": None, "hs_machine_next": None}
         values.update({f"hs_{state}": None for state in STATES})
         if pane.get("agent"):
             if heading and previous is not None:
@@ -208,6 +219,11 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             mark = working_glyph if status == "working" else STATES[status]
             values[f"hs_{status}"] = mark + " " + task_label(pane, tabs)
             previous = pane["pane_id"]
+            # This machine's entries end where the first remote's begin.
+            if remote and pane["pane_id"] == agent_ids[0]:
+                values["hs_machine"] = "━ " + LOCAL_MACHINE
+            if remote and pane["pane_id"] == agent_ids[-1]:
+                values["hs_machine_next"] = "━ " + remote
         # Mutually exclusive tokens let static Herdr styles dim a whole group.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
             values[key + "_dim"] = values[key] if pane["workspace_id"] in inactive_ids else None
@@ -244,7 +260,8 @@ def refresh(clear=False, restore_view=False):
         animated = settings["animated_loaders"] and not clear
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
-                               branch_length=settings["branch_length"])
+                               branch_length=settings["branch_length"],
+                               remote=None if clear else machine_remote(settings["order"]))
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []

@@ -164,6 +164,10 @@ def config_home():
     return _xdg() / "herdr"
 
 
+def state_home():
+    return Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "herdr"
+
+
 def font_dir():
     return Path.home() / ("Library/Fonts" if sys.platform == "darwin" else ".local/share/fonts")
 

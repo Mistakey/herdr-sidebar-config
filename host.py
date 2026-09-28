@@ -16,7 +16,8 @@ Callers use these names and never branch on the platform themselves:
   ``"up"``, ``"down"``, ``"left"``, ``"right"``, ``"enter"``, ``"escape"``,
   ``"backspace"``, ``"resize"``, or one typed character.
 - ``entry(name)``: this platform's manifest id for a logical action or pane.
-- ``config_home()``, ``font_dir()``, ``ghostty_config()``: default locations;
+- ``config_home()``, ``state_home()``, ``font_dir()``, ``ghostty_config()``:
+  default locations; ``state_home()`` holds the Herdr client's machine catalog;
   ``ghostty_config()`` is ``None`` where setup edits no terminal config.
 - ``INTERPRETER_RECORD``: the plugin-config file naming the hook interpreter,
   or ``None`` where the hook launcher finds Python itself.
@@ -33,12 +34,12 @@ import sys
 if os.name == "nt":
     from host_windows import (INTERPRETER_RECORD, Fonts, Lock, WakeListener, config_home,
                               connect, font_available, font_dir, ghostty_config,
-                              spawn_detached, terminal, wake)
+                              spawn_detached, state_home, terminal, wake)
     PLATFORM = "windows"
 else:
     from host_posix import (INTERPRETER_RECORD, Fonts, Lock, WakeListener, config_home,
                             connect, font_available, font_dir, ghostty_config,
-                            spawn_detached, terminal, wake)
+                            spawn_detached, state_home, terminal, wake)
     PLATFORM = "macos" if sys.platform == "darwin" else "linux"
 
 # Herdr rejects duplicate action/pane ids even when their platforms differ, so
@@ -54,4 +55,4 @@ def entry(name):
 
 __all__ = ["ENTRIES", "INTERPRETER_RECORD", "PLATFORM", "Fonts", "Lock", "WakeListener",
            "config_home", "connect", "entry", "font_available", "font_dir", "ghostty_config",
-           "spawn_detached", "terminal", "wake"]
+           "spawn_detached", "state_home", "terminal", "wake"]
