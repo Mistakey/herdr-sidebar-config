@@ -2,7 +2,6 @@
 [ui.sidebar.agents]
 row_gap = 0
 rows = [
-  [{ token = "$hs_machine", bold = true, dim = false, fg = "#F8F8F2" }],
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_terminals", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_tab", fg = "#A8ADB9", dim = false }, { token = "$hs_tab_dim", fg = "#A8ADB9", dim = true }],
@@ -22,12 +21,10 @@ rows = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_next", bold = true, dim = false, fg = "#F8F8F2" }],
 ]
 
 [ui.sidebar.agents.rows_by_agent]
 agy = [
-  [{ token = "$hs_machine", bold = true, dim = false, fg = "#F8F8F2" }],
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_terminals", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_tab", fg = "#A8ADB9", dim = false }, { token = "$hs_tab_dim", fg = "#A8ADB9", dim = true }],
@@ -47,10 +44,8 @@ agy = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_next", bold = true, dim = false, fg = "#F8F8F2" }],
 ]
 claude = [
-  [{ token = "$hs_machine", bold = true, dim = false, fg = "#F8F8F2" }],
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_terminals", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_tab", fg = "#A8ADB9", dim = false }, { token = "$hs_tab_dim", fg = "#A8ADB9", dim = true }],
@@ -70,10 +65,8 @@ claude = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_next", bold = true, dim = false, fg = "#F8F8F2" }],
 ]
 codex = [
-  [{ token = "$hs_machine", bold = true, dim = false, fg = "#F8F8F2" }],
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_terminals", dim = true, fg = "#A8ADB9" }],
   [{ token = "$hs_tab", fg = "#A8ADB9", dim = false }, { token = "$hs_tab_dim", fg = "#A8ADB9", dim = true }],
@@ -93,5 +86,4 @@ codex = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_next", bold = true, dim = false, fg = "#F8F8F2" }],
 ]

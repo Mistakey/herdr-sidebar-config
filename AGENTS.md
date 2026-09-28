@@ -76,11 +76,8 @@ and follow [manual removal](docs/setup.md#manual-removal).
 - Keep upstream artwork licenses and attribution with any redistributed fonts.
 - Each plugin sees and decorates only its own server's panes. Machine labels
   ("Local", "Home") exist only in the viewing client's endpoint catalog and are
-  never sent to servers, while tokens are shared by every client viewing a pane.
-  Machine headings come only from the plugin's own machine's client catalog,
-  which assumes the viewer sits at that machine; a machine that both serves
-  another client and has enabled remotes shows its headings there too
-  (documented limit). Never try to name how another client sees this server.
+  never sent to servers, while tokens are shared by every client viewing a pane:
+  never publish a machine name from a remote server's plugin.
 - Declare every hook once per platform family: POSIX entries keep
   `platforms = ["linux", "macos"]` and `sh run.sh`; Windows entries use
   `["cmd", "/c", '.\run.cmd', …]`. Herdr rejects duplicate action and pane ids

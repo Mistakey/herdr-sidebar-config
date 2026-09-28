@@ -111,26 +111,6 @@ installed on that machine too. Run setup there, inside one of its own Herdr
 panes. On Windows, run it with the interpreter's absolute path when `python`
 could resolve to several installs.
 
-When this client's machine catalog (`client/endpoints.json` under Herdr's
-state directory) has an enabled remote, the plugin heads its own agents with
-`━ Local` and closes them with `━ <name>`, the first enabled remote's name as
-Herdr shows it. It publishes these headings only in workspace order; the
-activity order interleaves machines. Known limits:
-
-- With three or more machines, only the Local-to-first-remote boundary is
-  marked; the plugin cannot see other machines' entries.
-- An offline or empty first remote still gets its heading below Local.
-- The headings assume Herdr's `agent_panel_sort = "spaces"`, which setup sets;
-  `priority` sorting mixes machines.
-- Existing installs need `setup_sidebar.py install` again to add the two layout
-  rows. Until then the tokens are published but not shown.
-- Renames and catalog changes appear at the next normal refresh.
-- Headings are pane tokens, and every client shows a pane's tokens as its own
-  server's plugin wrote them. If a remote machine has an enabled remote of its
-  own, its plugin heads its agents for its own screen, and you see those
-  headings too: an extra `━ Local` above that machine's agents and `━ <its
-  remote>` below them.
-
 ## Manual installation
 
 Use this when preserving a customized sidebar, installing on another terminal,

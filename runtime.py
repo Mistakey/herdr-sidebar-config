@@ -49,22 +49,3 @@ def icon_mode():
 
 def logo_for(agent, mode):
     return (PUA_LOGOS if mode == "font" else TEXT_LOGOS).get(agent, "◇")
-
-
-def remote_machine(path=None):
-    """Name of the first enabled remote in this client's machine catalog.
-
-    Machine names exist only in the viewing client's catalog; a missing or
-    unreadable catalog means no remote, never an error.
-    """
-    path = path or host.state_home() / "client" / "endpoints.json"
-    try:
-        catalog = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    remotes = catalog.get("ssh") if isinstance(catalog, dict) else None
-    for remote in remotes if isinstance(remotes, list) else []:
-        if isinstance(remote, dict) and remote.get("enabled") is True:
-            label = remote.get("label")
-            return label if isinstance(label, str) and label.strip() else None
-    return None
