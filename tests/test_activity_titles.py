@@ -86,6 +86,16 @@ class ActivityTitleTests(unittest.TestCase):
         ])
         self.assertEqual(activity_title(self.pane("claude")), "Repair remote restore")
 
+    def test_claude_session_that_entered_a_worktree(self):
+        # Claude writes under the worktree; the pane still reports the checkout.
+        self.write(".claude/projects/-work-project--claude-worktrees-fix-1/session-1.jsonl", [
+            {"type": "ai-title", "aiTitle": "Repair remote restore", "sessionId": "session-1"},
+        ])
+        self.write(".claude/projects/-work-project--claude-worktrees-fix-2/session-2.jsonl", [
+            {"type": "ai-title", "aiTitle": "Wrong session", "sessionId": "session-2"},
+        ])
+        self.assertEqual(activity_title(self.pane("claude")), "Repair remote restore")
+
     def test_pi_native_name_and_explicit_clear(self):
         records = [{"type": "session", "id": "session-1"}, {"type": "session_info", "name": "Repair remote restore"}]
         self.write(".pi/agent/sessions/--work-project--/2026-09-08_session-1.jsonl", records)
