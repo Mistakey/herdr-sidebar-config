@@ -8,6 +8,8 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import host
+
 PLUGIN_ID = "testy-cool.herdr-sidebar"
 FONT_FAMILY = "Herdr Sidebar Logos"
 PUA_LOGOS = {name: chr(0xE1A0 + index) for index, name in enumerate(
@@ -42,13 +44,7 @@ def icon_mode():
         raise RuntimeError("icons must be 'auto', 'font', or 'text' in the plugin config.toml")
     if mode != "auto":
         return mode
-    command = shutil.which("fc-match")
-    if command:
-        result = subprocess.run([command, "--format", "%{family}", FONT_FAMILY],
-                                capture_output=True, text=True, timeout=5)
-        if result.returncode == 0 and FONT_FAMILY in result.stdout.split(","):
-            return "font"
-    return "text"
+    return "font" if host.font_available(FONT_FAMILY) else "text"
 
 
 def logo_for(agent, mode):

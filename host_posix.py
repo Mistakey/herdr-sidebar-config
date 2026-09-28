@@ -4,8 +4,10 @@ import fcntl
 import hashlib
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 
 
@@ -152,3 +154,70 @@ def terminal():
         curses.nocbreak()
         curses.echo()
         curses.endwin()
+
+
+def _xdg():
+    return Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
+
+
+def config_home():
+    return _xdg() / "herdr"
+
+
+def font_dir():
+    return Path.home() / ("Library/Fonts" if sys.platform == "darwin" else ".local/share/fonts")
+
+
+def ghostty_config():
+    if sys.platform == "darwin":
+        return Path.home() / "Library/Application Support/com.mitchellh.ghostty/config"
+    return _xdg() / "ghostty/config"
+
+
+INTERPRETER_RECORD = None  # run.sh finds python3 on PATH.
+
+
+def font_available(family):
+    command = shutil.which("fc-match")
+    if command:
+        result = subprocess.run([command, "--format", "%{family}", family],
+                                capture_output=True, text=True, timeout=5)
+        return result.returncode == 0 and family in result.stdout.split(",")
+    return False
+
+
+class Fonts:
+    """A font file refreshed with fc-cache and mapped in Ghostty's config."""
+
+    def __init__(self, path, family, terminal_config):
+        self._path, self._ghostty = path, terminal_config
+
+    def _ghostty_text(self):
+        return self._ghostty.read_bytes().decode("utf-8") if self._ghostty.exists() else ""
+
+    def files(self):
+        from configuration import ghostty_mapping
+        return {self._ghostty: ghostty_mapping(self._ghostty_text()).encode("utf-8")}
+
+    def _cache(self):
+        if shutil.which("fc-cache"):
+            subprocess.run(["fc-cache", "-f", str(self._path.parent)], check=True, timeout=30)
+
+    def release(self):
+        pass
+
+    def register(self):
+        self._cache()
+
+    def unregister(self, prior):
+        self._cache()
+
+    def checks(self):
+        from configuration import GHOSTTY_MAPPING
+        return {"ghostty_mapping": GHOSTTY_MAPPING in self._ghostty_text().splitlines()}
+
+    def notes(self):
+        return ["Open a fresh Ghostty process to load the icon font. Herdr sessions keep running."]
+
+    def hints(self):
+        return {}

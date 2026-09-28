@@ -109,6 +109,10 @@ interface and never branch on the platform. `host_posix.py` and
 | `connect` (Herdr API) | Unix socket at `HERDR_SOCKET_PATH` | named pipe `\\.\pipe\` + `HERDR_SOCKET_PATH`, overlapped I/O |
 | `WakeListener` / `wake` | private Unix datagram socket | UDP on 127.0.0.1; port in `deadline.port` in the state directory |
 | `spawn_detached` | new session | new process group, no window, only the log handle inherited |
+| `config_home` / `font_dir` | `$XDG_CONFIG_HOME/herdr`; `~/.local/share/fonts` or `~/Library/Fonts` | `%APPDATA%\herdr`; `%LOCALAPPDATA%\Microsoft\Windows\Fonts` |
+| `INTERPRETER_RECORD` | none; `run.sh` runs `python3` | `python-path.txt` in the plugin config directory, read by `run.cmd` |
+| `font_available` (`icons = "auto"`) | `fc-match` names the family | a per-user or machine font registration names an existing file |
+| `Fonts` (setup) | `fc-cache`; Ghostty codepoint map as a managed file | per-user font registration; Windows Terminal's fallback is only read |
 
 Every API step has the same two-second bound on both platforms. A wake carries
 no data and only makes the scheduler reread its state, so a forged datagram is
@@ -159,7 +163,7 @@ Set `icons` in the plugin config directory's `config.toml`:
 | --- | --- |
 | `"font"` | Use the bundled U+E1A0–U+E1A8 marks; setup's Ghostty default |
 | `"text"` | Use short labels; selected by setup's `--text` |
-| `"auto"` | Default without setup: use font mode if `fc-match` finds the exact family, otherwise text |
+| `"auto"` | Default without setup: use font mode if the font is installed (`fc-match` finds the exact family; on Windows, a font registration names it), otherwise text |
 
 Font discovery does not prove the terminal has loaded the font. macOS without
 Fontconfig will use text in auto mode; setup selects explicit font mode. The

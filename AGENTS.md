@@ -19,7 +19,9 @@ python3 setup_sidebar.py install --json
 python3 setup_sidebar.py doctor --json
 ```
 
-For terminals other than Ghostty, add `--text` to both install commands. Setup
+On Windows, use `python` or `py -3` for `python3`; font mode targets Windows
+Terminal, whose font fallback the user adds by hand (setup prints how). For
+other terminals, add `--text` to both install commands. Setup
 backs up modified files before writing. `--dry-run` reports paths and makes no
 writes. JSON output has a `status` field; exit 0 means success, 1 means a setup
 error or a doctor check needing attention, and 2 means invalid CLI arguments.
@@ -100,7 +102,11 @@ overridden and inherited `HERDR_*` variables cleared. `HERDR_CONFIG_PATH` moves
 only `config.toml`; sockets and plugin registrations stay under the real root.
 Plugin state (locks, `deadline.port`, the deadline worker's files) lives in
 `%LOCALAPPDATA%\herdr\plugins\<id>`, so override `LOCALAPPDATA` too, and stop
-the test's deadline worker when you stop the server. A popup plugin pane has no
+the test's deadline worker when you stop the server. With `LOCALAPPDATA`
+overridden, the Python install manager's `python` and `py` commands fail; run
+setup with the interpreter's absolute path, which then becomes the test's hook
+interpreter. Font-mode setup writes a real per-user font registration under
+`HKCU` (no override exists): confirm uninstall removed it. A popup plugin pane has no
 public pane id (`plugin pane open` answers only `ok`); to drive the settings
 pane with `herdr pane send-keys`, open its entrypoint with
 `herdr plugin pane open --placement tab`. Use demo

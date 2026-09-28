@@ -10,11 +10,13 @@ import ctypes
 import msvcrt
 import os
 from pathlib import Path
+import re
 import shutil
 import socket
 import subprocess
 import sys
 import time
+import winreg
 
 ERROR_BROKEN_PIPE = 109
 ERROR_PIPE_BUSY = 231
@@ -251,3 +253,130 @@ def terminal():
         stream.flush()
         if console:
             kernel32.SetConsoleMode(handle, mode.value)
+
+
+def config_home():
+    return Path(os.environ["APPDATA"]) / "herdr"
+
+
+def font_dir():
+    return Path(os.environ["LOCALAPPDATA"]) / "Microsoft" / "Windows" / "Fonts"
+
+
+def ghostty_config():
+    return None
+
+
+# Hooks prefer the interpreter setup ran with; see run.cmd.
+INTERPRETER_RECORD = "python-path.txt"
+FONTS_KEY = r"Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+
+
+def _registrations(family):
+    """Yield (hive, value name, file) for every registration of ``family``."""
+    for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            key = winreg.OpenKey(hive, FONTS_KEY)
+        except OSError:
+            continue
+        with key:
+            for index in range(winreg.QueryInfoKey(key)[1]):
+                name, value, _ = winreg.EnumValue(key, index)
+                face = name.rsplit(" (", 1)[0]
+                if isinstance(value, str) and (face == family or face.startswith(family + " ")):
+                    yield hive, name, value
+
+
+def font_available(family):
+    # Machine-wide registrations name a file in the Windows fonts directory.
+    windows = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"
+    return any((windows / value).is_file() for _, _, value in _registrations(family))
+
+
+def _value_name(family):
+    return family + " Regular (TrueType)"
+
+
+def register_font(path, family):
+    """Register ``path`` for this user; return the value it replaced, if any."""
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, FONTS_KEY) as key:
+        try:
+            prior = winreg.QueryValueEx(key, _value_name(family))[0]
+        except FileNotFoundError:
+            prior = None
+        winreg.SetValueEx(key, _value_name(family), 0, winreg.REG_SZ, str(path))
+    return prior
+
+
+def unregister_font(path, family, prior=None):
+    """Put back ``prior``, or drop a registration naming ``path``."""
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, FONTS_KEY) as key:
+        if prior is not None:
+            winreg.SetValueEx(key, _value_name(family), 0, winreg.REG_SZ, prior)
+            return
+        try:
+            current = winreg.QueryValueEx(key, _value_name(family))[0]
+        except FileNotFoundError:
+            return
+        if os.path.normcase(current) == os.path.normcase(str(path)):
+            winreg.DeleteValue(key, _value_name(family))
+
+
+def font_registered(path, family):
+    return any(hive == winreg.HKEY_CURRENT_USER and
+               os.path.normcase(value) == os.path.normcase(str(path))
+               for hive, _, value in _registrations(family))
+
+
+def _terminal_settings():
+    local = Path(os.environ["LOCALAPPDATA"])
+    packages = local / "Packages"
+    return [packages / "Microsoft.WindowsTerminal_8wekyb3d8bbwe" / "LocalState" / "settings.json",
+            packages / "Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe" / "LocalState" / "settings.json",
+            local / "Microsoft" / "Windows Terminal" / "settings.json"]
+
+
+def terminal_fallback(family):
+    """Read-only: does any Windows Terminal font face list ``family``?"""
+    face = re.compile(r'"(?:face|fontFace)"\s*:\s*"[^"]*' + re.escape(family))
+    for path in _terminal_settings():
+        try:
+            if face.search(path.read_text(encoding="utf-8-sig")):
+                return True
+        except OSError:
+            continue
+    return False
+
+
+class Fonts:
+    """A per-user font registration. Setup never writes Windows Terminal's
+    settings.json (JSONC, user-owned); doctor only reads it."""
+
+    def __init__(self, path, family, terminal_config=None):
+        self._path, self._family = path, family
+
+    def files(self):
+        return {}
+
+    def release(self):
+        # Windows' font cache holds a registered file open; it lets go about
+        # a second after the registration disappears.
+        unregister_font(self._path, self._family)
+
+    def register(self):
+        return register_font(self._path, self._family)
+
+    def unregister(self, prior):
+        unregister_font(self._path, self._family, prior)
+
+    def checks(self):
+        return {"font_registered": font_registered(self._path, self._family),
+                "windows_terminal_fallback": terminal_fallback(self._family)}
+
+    def notes(self):
+        return [f'Windows Terminal: append ", {self._family}" to each profile\'s font face '
+                "(Settings > Profile > Appearance > Font face), then open a new Windows "
+                "Terminal window. Herdr sessions keep running."]
+
+    def hints(self):
+        return {"windows_terminal_fallback": self.notes()[0]}

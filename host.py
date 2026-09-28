@@ -16,15 +16,29 @@ Callers use these names and never branch on the platform themselves:
   ``"up"``, ``"down"``, ``"left"``, ``"right"``, ``"enter"``, ``"escape"``,
   ``"backspace"``, ``"resize"``, or one typed character.
 - ``entry(name)``: this platform's manifest id for a logical action or pane.
+- ``config_home()``, ``font_dir()``, ``ghostty_config()``: default locations;
+  ``ghostty_config()`` is ``None`` where setup edits no terminal config.
+- ``INTERPRETER_RECORD``: the plugin-config file naming the hook interpreter,
+  or ``None`` where the hook launcher finds Python itself.
+- ``font_available(family)``: whether ``icons = "auto"`` may use the font.
+- ``Fonts(path, family, terminal_config)``: the icon font's platform steps:
+  ``files()`` (further managed files), ``release()`` before the font file is
+  replaced or removed, ``register()`` returning what ``unregister(prior)``
+  later restores, ``checks()`` and ``hints()`` for doctor, and ``notes()``
+  shown after installation.
 """
 import os
 import sys
 
 if os.name == "nt":
-    from host_windows import Lock, WakeListener, connect, spawn_detached, terminal, wake
+    from host_windows import (INTERPRETER_RECORD, Fonts, Lock, WakeListener, config_home,
+                              connect, font_available, font_dir, ghostty_config,
+                              spawn_detached, terminal, wake)
     PLATFORM = "windows"
 else:
-    from host_posix import Lock, WakeListener, connect, spawn_detached, terminal, wake
+    from host_posix import (INTERPRETER_RECORD, Fonts, Lock, WakeListener, config_home,
+                            connect, font_available, font_dir, ghostty_config,
+                            spawn_detached, terminal, wake)
     PLATFORM = "macos" if sys.platform == "darwin" else "linux"
 
 # Herdr rejects duplicate action/pane ids even when their platforms differ, so
@@ -38,5 +52,6 @@ def entry(name):
     return ENTRIES[PLATFORM][name]
 
 
-__all__ = ["ENTRIES", "PLATFORM", "Lock", "WakeListener", "connect", "entry",
+__all__ = ["ENTRIES", "INTERPRETER_RECORD", "PLATFORM", "Fonts", "Lock", "WakeListener",
+           "config_home", "connect", "entry", "font_available", "font_dir", "ghostty_config",
            "spawn_detached", "terminal", "wake"]
