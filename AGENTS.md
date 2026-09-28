@@ -74,6 +74,10 @@ and follow [manual removal](docs/setup.md#manual-removal).
 - Preserve unrelated user settings and never commit local configs, backups,
   session captures, credentials, or personal paths.
 - Keep upstream artwork licenses and attribution with any redistributed fonts.
+- Each plugin sees and decorates only its own server's panes. Machine labels
+  ("Local", "Home") exist only in the viewing client's endpoint catalog and are
+  never sent to servers, while tokens are shared by every client viewing a pane:
+  never publish a machine name from a remote server's plugin.
 - Declare every hook once per platform family: POSIX entries keep
   `platforms = ["linux", "macos"]` and `sh run.sh`; Windows entries use
   `["cmd", "/c", '.\run.cmd', …]`. Herdr rejects duplicate action and pane ids
