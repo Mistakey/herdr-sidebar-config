@@ -81,7 +81,10 @@ python3 -m venv .venv-font
 
 After runtime/layout/setup changes, use a separate Herdr session **and a separate
 config root** to test installation, refresh, a second-tab transition, doctor,
-and removal. A named session alone still shares user configuration. Use demo
+and removal. A named session alone still shares user configuration. On Windows,
+the config root is `%APPDATA%\herdr`: run the test server with `APPDATA`
+overridden and inherited `HERDR_*` variables cleared. `HERDR_CONFIG_PATH` moves
+only `config.toml`; sockets and plugin registrations stay under the real root. Use demo
 data for published captures and label it. Do not operate the user's working
 agent panes to make a screenshot.
 
