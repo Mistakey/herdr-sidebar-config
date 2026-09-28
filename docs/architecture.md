@@ -15,7 +15,7 @@ Herdr lifecycle event
 ```
 
 Each hook is a short Python process. A file lock serializes overlapping hooks.
-One deadline process sleeps on a local socket until the next quiet-period
+One deadline process sleeps on a local wake channel until the next quiet-period
 deadline. Animation is off by default. A refresh reads one
 snapshot and sends at most one metadata command per changed pane. The CLI calls
 have timeouts. Frequent lifecycle events can still start many hooks; this is not
@@ -84,9 +84,29 @@ different native offsets, so the prefix arithmetic is intentional.
 it; focus and title changes do not. At 600 seconds, refresh switches the label,
 heading, tab and agent tokens to their dim variants. Native lifecycle symbols
 in Spaces retain their meaning. `deadline.py` holds a single process lock and
-waits on a private Unix datagram socket until the earliest deadline. Refreshes
-reschedule that wait; no deadlines means exit. Removal clears both pane and
-workspace tokens and cancels the pending wait.
+waits on a wake channel until the earliest deadline. A refresh only probes that
+lock: when it is held, the refresh sends a wake; when it is free, the refresh
+starts a detached scheduler, which takes the lock itself and exits if another
+scheduler won. Refreshes reschedule the wait; no deadlines means exit. Removal
+clears both pane and workspace tokens and cancels the pending wait.
+
+## Platform layer
+
+`host.py` is the only module that chooses an operating system; callers use its
+interface and never branch on the platform. `host_posix.py` and
+`host_windows.py` implement it:
+
+| Interface | POSIX | Windows |
+| --- | --- | --- |
+| `Lock` | `flock` | one-byte `msvcrt` lock, polled when blocking |
+| `connect` (Herdr API) | Unix socket at `HERDR_SOCKET_PATH` | named pipe `\\.\pipe\` + `HERDR_SOCKET_PATH`, overlapped I/O |
+| `WakeListener` / `wake` | private Unix datagram socket | UDP on 127.0.0.1; port in `deadline.port` in the state directory |
+| `spawn_detached` | new session | new process group, no window, only the log handle inherited |
+
+Every API step has the same two-second bound on both platforms. A wake carries
+no data and only makes the scheduler reread its state, so a forged datagram is
+harmless. Plugin text files and Herdr CLI output are read and written as UTF-8
+regardless of the Windows code page.
 
 ## Optional loaders
 
@@ -98,7 +118,7 @@ provider identity, selected token and task text under the shared group lock.
 Frame writes take that same lock and reread the cache, so a completed/closed
 pane cleared by a refresh cannot be repopulated by a stale frame.
 
-Frames use direct socket requests: one narrow plugin-registry lookup to stop
+Frames use direct API requests: one narrow plugin-registry lookup to stop
 when disabled, then one working-token patch per cached working pane. No CLI
 process, snapshot, title computation or transcript scan runs per frame. API
 failure ends the worker rather than retrying in a busy loop. The next lifecycle

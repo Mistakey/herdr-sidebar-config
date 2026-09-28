@@ -30,7 +30,7 @@ def editor(screen):
         screen.bkgd(' ', curses.color_pair(1))
     screen.keypad(True)
     path = preferences.settings_path()
-    original = path.read_text() if path.exists() else ""
+    original = path.read_text(encoding="utf-8") if path.exists() else ""
     values = preferences.load(path)
     initial = dict(values)
     selected, message, number = 0, "", ""
@@ -68,7 +68,7 @@ def editor(screen):
                     values["inactive_after_seconds"] = float(number) * 60
                 changes = {k: v for k, v in values.items() if k in preferences.DEFAULTS and v != initial[k]}
                 preferences.save(path, original, changes)
-                original = path.read_text() if path.exists() else ""
+                original = path.read_text(encoding="utf-8") if path.exists() else ""
                 # The popup already has plugin context. Apply synchronously so
                 # an API failure stays visible instead of reporting false success.
                 from sidebar import refresh

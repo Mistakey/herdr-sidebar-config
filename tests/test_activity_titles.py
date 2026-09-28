@@ -2,6 +2,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -32,7 +33,8 @@ class ActivityTitleTests(unittest.TestCase):
     def database(self, title, name=None, mode="legacy", first="First prompt"):
         path = self.home / ".codex/state_5.sqlite"
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as db:
+        # Close explicitly: Windows cannot delete a database file still open.
+        with closing(sqlite3.connect(path)) as db, db:
             db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, name TEXT, history_mode TEXT, first_user_message TEXT)")
             db.execute("INSERT INTO threads VALUES (?,?,?,?,?)", ("session-1", title, name, mode, first))
 

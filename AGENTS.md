@@ -42,6 +42,7 @@ and follow [manual removal](docs/setup.md#manual-removal).
 | `activity_titles.py` | Exact-session native Codex, Claude and Pi names |
 | `inactivity.py`, `deadline.py` | Quiet-period state and one sleeping deadline process |
 | `runtime.py` | CLI calls, binary discovery, font/text selection |
+| `host.py`, `host_posix.py`, `host_windows.py` | Platform layer: locks, API transport, wake channel, detached start |
 | `sidebar-layout.toml` | Native Herdr rows and colors |
 | `setup_sidebar.py`, `configuration.py` | Installation, backups, removal, checks |
 | `tools/`, `assets/`, `font/`, `dist/` | Reproducible icon font and licensed source artwork |
