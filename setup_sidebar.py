@@ -17,7 +17,7 @@ if sys.version_info < (3, 11):
 import tomllib
 from pathlib import Path
 
-from configuration import dimmable_spaces, merge_layout
+from configuration import dimmable_spaces, merge_layout, restore_layout
 import host
 from runtime import FONT_FAMILY, PLUGIN_ID, herdr_binary, run_herdr
 
@@ -135,7 +135,7 @@ def install(args, binary):
     record = args.state_dir / "install.json"
     state = json.loads(record.read_text(encoding="utf-8")) if record.exists() else {"files": {}, "created_link": not bool(existing)}
     classify_preferences(state, config_dir / "config.toml")
-    edited = edited_files(state)
+    edited = edited_files(state, merged={str(args.config)})
     if edited:
         raise RuntimeError("Files changed since setup: " + ", ".join(edited) +
                            ". Keep your edits and use manual installation/removal.")
@@ -177,16 +177,43 @@ def install(args, binary):
           "notes": [] if args.text else fonts(args).notes()}, args.json)
 
 
-def edited_files(state, restoring=False):
+def original(entry):
+    return None if entry.get("before") is None else base64.b64decode(entry["before"])
+
+
+def edited_files(state, restoring=False, merged=()):
     # A file already back to its original is not an edit: a retried
     # uninstall finds the files an interrupted one restored or removed.
+    # Setup edits ``merged`` files in place, so later edits there are kept.
     def edited(entry, current):
         if current is None:
             return not (restoring and "before" in entry and entry["before"] is None)
-        before = None if entry.get("before") is None else base64.b64decode(entry["before"])
-        return digest(current) != entry["installed_sha256"] and current != before
+        return digest(current) != entry["installed_sha256"] and current != original(entry)
     return [path for path, entry in state["files"].items()
-            if not entry.get("user_editable") and edited(entry, read(Path(path)))]
+            if not entry.get("user_editable") and path not in merged and edited(entry, read(Path(path)))]
+
+
+def restorations(state, config):
+    """Map each managed file to the bytes uninstall writes, or None to delete it.
+
+    A Herdr config edited since setup gets only the sidebar parts undone.
+    """
+    result = {}
+    for path, entry in state["files"].items():
+        if entry.get("user_editable"):
+            continue
+        current, before = read(Path(path)), original(entry)
+        if (path == str(config) and current is not None and current != before
+                and digest(current) != entry["installed_sha256"]):
+            try:
+                result[path] = restore_layout(current.decode("utf-8"),
+                                              (before or b"").decode("utf-8"),
+                                              (ROOT / "sidebar-layout.toml").read_text(encoding="utf-8")).encode("utf-8")
+            except ValueError as error:
+                raise RuntimeError(f"{error} Original contents are in the setup backup.") from error
+        else:
+            result[path] = before
+    return result
 
 
 def classify_preferences(state, path):
@@ -207,10 +234,11 @@ def uninstall(args, binary):
         raise RuntimeError("No setup backup found. Use the README's manual removal steps.")
     state = json.loads(record.read_text(encoding="utf-8"))
     classify_preferences(state, plugin_config_dir(binary) / "config.toml")
-    edited = edited_files(state, restoring=True)
+    edited = edited_files(state, restoring=True, merged={str(args.config)})
     if edited:
         raise RuntimeError("These files changed since installation; refusing to overwrite them: " +
                            ", ".join(edited) + f". Original contents are in {record}; see manual removal.")
+    restored = restorations(state, args.config)
     summary = {"status": "planned", "message": "Restore backed-up files and disable Herdr Sidebar.",
                "files": [p for p, entry in state["files"].items() if not entry.get("user_editable")]}
     if args.dry_run:
@@ -225,13 +253,11 @@ def uninstall(args, binary):
     font = fonts(args) if "font" in state or str(args.font_dir / FONT) in state["files"] else None
     if font:
         font.release()
-    for path, entry in state["files"].items():
-        if entry.get("user_editable"):
-            continue
-        if entry["before"] is None:
+    for path, data in restored.items():
+        if data is None:
             patiently(lambda: Path(path).unlink(missing_ok=True))
         else:
-            write(Path(path), base64.b64decode(entry["before"]))
+            write(Path(path), data)
     reload_config(binary)
     if font:
         font.unregister(state.get("font", {}).get("prior"))

@@ -123,8 +123,9 @@ python3 setup_sidebar.py uninstall --dry-run
 python3 setup_sidebar.py uninstall
 ```
 
-Removal keeps your checkout and preferences. Setup refuses to overwrite managed
-files edited since installation. [Keeping custom edits and troubleshooting →](docs/setup.md)
+Removal keeps your checkout and preferences. Later edits to your Herdr config,
+such as a new theme, survive repeat installs and removal; setup refuses to
+overwrite other managed files edited since installation. [Keeping custom edits and troubleshooting →](docs/setup.md)
 
 Contributing? Start with [AGENTS.md](AGENTS.md) and the [architecture guide](docs/architecture.md).
 

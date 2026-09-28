@@ -67,8 +67,12 @@ layout is left alone.
 
 Backups contain original file bytes, including any private values already in
 your config. They are local files written with restrictive permissions; never
-publish them. Repeated installs retain the first backup. Setup and removal stop
-if a managed layout/font file has since changed; editable plugin preferences are
+publish them. Repeated installs retain the first backup. Later edits to the Herdr
+config, such as a new theme, are kept: setup merges the layout into the current
+file again, and removal restores only the sidebar tables, `agent_panel_sort`, and
+the settings shortcut from the backup (the whole original file when nothing else
+changed). Setup and removal stop if another managed file (font, interpreter
+record, Ghostty config) has since changed; editable plugin preferences are
 excluded from that guard and from restoration. An interrupted setup retains its backup for
 inspection and recovery. The helper is intended for one active session at a
 time; other running sessions that share the config may need their own refresh.
@@ -137,7 +141,8 @@ process without closing your current windows or Herdr sessions.
 
 ## Manual removal
 
-Use this if setup has no backup or refuses to replace a file edited later.
+Use this if setup has no backup, refuses to replace a file edited later, or
+cannot undo the sidebar tables in a Herdr config whose layout was hand-edited.
 
 1. Run `herdr plugin action invoke clear --plugin testy-cool.herdr-sidebar` while
    the plugin is enabled, then `herdr plugin disable testy-cool.herdr-sidebar`.
