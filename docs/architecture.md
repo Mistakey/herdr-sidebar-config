@@ -6,7 +6,7 @@ decides how Herdr draws them; the bundled font supplies provider marks.
 
 ```text
 Herdr lifecycle event
-  -> run.sh -> sidebar.py
+  -> run.sh (run.cmd on Windows) -> sidebar.py
   -> herdr api snapshot
   -> workspace/tab grouping and task-title selection
   -> compare desired tokens with current tokens
@@ -20,6 +20,13 @@ deadline. Animation is off by default. A refresh reads one
 snapshot and sends at most one metadata command per changed pane. The CLI calls
 have timeouts. Frequent lifecycle events can still start many hooks; this is not
 a claim of zero overhead or a measured benchmark.
+
+The manifest declares each hook, action, and pane once per platform family.
+Herdr deduplicates action and pane ids without regard to platform, so Windows
+entries carry their own ids; `host.ENTRIES` maps each logical entry (`settings`,
+`refresh`, `clear`) to the current platform's id. The settings popup draws
+through the platform layer's terminal: curses on POSIX, `msvcrt` keys and VT
+sequences on Windows.
 
 ## Grouping and titles
 

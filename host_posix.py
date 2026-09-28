@@ -1,4 +1,5 @@
-"""POSIX platform layer: flock, Unix sockets, and a new session per worker."""
+"""POSIX platform layer: flock, Unix sockets, a new session per worker, curses."""
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import os
@@ -97,3 +98,57 @@ def spawn_detached(argv, log):
     with open(log, "a", encoding="utf-8") as stream:
         return subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=stream, stderr=stream,
                                 start_new_session=True)
+
+
+class _Curses:
+    def __init__(self, curses, screen):
+        self._curses, self._screen = curses, screen
+        self._styles = {None: 0, "bold": curses.A_BOLD, "reverse": curses.A_REVERSE}
+        self._keys = {curses.KEY_UP: "up", curses.KEY_DOWN: "down", curses.KEY_LEFT: "left",
+                      curses.KEY_RIGHT: "right", curses.KEY_ENTER: "enter", "\n": "enter",
+                      "\r": "enter", "\x1b": "escape", curses.KEY_BACKSPACE: "backspace",
+                      "\x7f": "backspace", "\b": "backspace", curses.KEY_RESIZE: "resize"}
+
+    def size(self):
+        return self._screen.getmaxyx()
+
+    def clear(self):
+        self._screen.erase()
+
+    def draw(self, y, x, text, style=None):
+        try:
+            self._screen.addstr(y, x, text, self._styles[style])
+        except self._curses.error:
+            pass  # Writing the last cell moves the cursor off screen.
+
+    def refresh(self):
+        self._screen.refresh()
+
+    def key(self):
+        key = self._screen.get_wch()
+        if key in self._keys:
+            return self._keys[key]
+        return key if isinstance(key, str) else ""
+
+
+@contextmanager
+def terminal():
+    import curses
+
+    screen = curses.initscr()
+    try:
+        curses.noecho()
+        curses.cbreak()
+        screen.keypad(True)
+        curses.curs_set(0)
+        if curses.has_colors():
+            curses.start_color()
+            curses.use_default_colors()
+            curses.init_pair(1, -1, -1)
+            screen.bkgd(" ", curses.color_pair(1))
+        yield _Curses(curses, screen)
+    finally:
+        screen.keypad(False)
+        curses.nocbreak()
+        curses.echo()
+        curses.endwin()

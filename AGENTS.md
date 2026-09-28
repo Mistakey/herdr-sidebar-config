@@ -42,7 +42,9 @@ and follow [manual removal](docs/setup.md#manual-removal).
 | `activity_titles.py` | Exact-session native Codex, Claude and Pi names |
 | `inactivity.py`, `deadline.py` | Quiet-period state and one sleeping deadline process |
 | `runtime.py` | CLI calls, binary discovery, font/text selection |
-| `host.py`, `host_posix.py`, `host_windows.py` | Platform layer: locks, API transport, wake channel, detached start |
+| `host.py`, `host_posix.py`, `host_windows.py` | Platform layer: locks, API transport, wake channel, detached start, popup terminal, entry ids |
+| `run.sh`, `run.cmd` | Hook launchers (POSIX, Windows) |
+| `settings_ui.py` | Settings popup logic over the platform terminal |
 | `sidebar-layout.toml` | Native Herdr rows and colors |
 | `setup_sidebar.py`, `configuration.py` | Installation, backups, removal, checks |
 | `tools/`, `assets/`, `font/`, `dist/` | Reproducible icon font and licensed source artwork |
@@ -70,6 +72,16 @@ and follow [manual removal](docs/setup.md#manual-removal).
 - Preserve unrelated user settings and never commit local configs, backups,
   session captures, credentials, or personal paths.
 - Keep upstream artwork licenses and attribution with any redistributed fonts.
+- Declare every hook once per platform family: POSIX entries keep
+  `platforms = ["linux", "macos"]` and `sh run.sh`; Windows entries use
+  `["cmd", "/c", '.\run.cmd', …]`. Herdr rejects duplicate action and pane ids
+  even across platforms, so Windows ids come from `host.ENTRIES`
+  (`refresh-windows` and so on); use `host.entry(name)`, never a literal id.
+  Keep the `.\`: with `NoDefaultCurrentDirectoryInExePath` set (Claude Code
+  sets it), `cmd /c run.cmd` cannot find the file. Herdr only appends `.exe`
+  when resolving commands, so `run.cmd` prefers the interpreter recorded in
+  the plugin config directory's `python-path.txt` (one UTF-8 line, no BOM),
+  then `py -3`, then `python`. Keep `run.cmd` in CRLF (`.gitattributes`).
 
 ## Verify changes
 
@@ -85,7 +97,13 @@ config root** to test installation, refresh, a second-tab transition, doctor,
 and removal. A named session alone still shares user configuration. On Windows,
 the config root is `%APPDATA%\herdr`: run the test server with `APPDATA`
 overridden and inherited `HERDR_*` variables cleared. `HERDR_CONFIG_PATH` moves
-only `config.toml`; sockets and plugin registrations stay under the real root. Use demo
+only `config.toml`; sockets and plugin registrations stay under the real root.
+Plugin state (locks, `deadline.port`, the deadline worker's files) lives in
+`%LOCALAPPDATA%\herdr\plugins\<id>`, so override `LOCALAPPDATA` too, and stop
+the test's deadline worker when you stop the server. A popup plugin pane has no
+public pane id (`plugin pane open` answers only `ok`); to drive the settings
+pane with `herdr pane send-keys`, open its entrypoint with
+`herdr plugin pane open --placement tab`. Use demo
 data for published captures and label it. Do not operate the user's working
 agent panes to make a screenshot.
 

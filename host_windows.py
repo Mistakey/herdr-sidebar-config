@@ -1,15 +1,19 @@
-"""Windows platform layer: byte-range locks, named pipes, and localhost UDP.
+"""Windows platform layer: byte-range locks, named pipes, localhost UDP, VT console.
 
 Herdr on Windows writes ``HERDR_SOCKET_PATH`` as a small text file and listens
 on the named pipe ``\\\\.\\pipe\\`` followed by that full path. Pipe I/O is
 overlapped so every step has the same bounded timeout as the POSIX socket.
 """
 import _winapi
+from contextlib import contextmanager
+import ctypes
 import msvcrt
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
+import sys
 import time
 
 ERROR_BROKEN_PIPE = 109
@@ -184,3 +188,66 @@ def spawn_detached(argv, log):
     with open(log, "a", encoding="utf-8") as stream:
         return subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=stream, stderr=stream,
                                 creationflags=flags, close_fds=True)
+
+
+ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+STD_OUTPUT_HANDLE = -11
+SCAN_KEYS = {"H": "up", "P": "down", "K": "left", "M": "right"}
+KEYS = {"\r": "enter", "\n": "enter", "\x1b": "escape", "\x03": "escape", "\b": "backspace"}
+STYLES = {None: "", "bold": "\x1b[1m", "reverse": "\x1b[7m"}
+
+
+class _Console:
+    """msvcrt reads keys; VT sequences draw. Polls the size to notice resizes."""
+
+    def __init__(self, stream):
+        self._stream, self._buffer = stream, []
+        self._size = self._measure()
+
+    def _measure(self):
+        columns, lines = shutil.get_terminal_size()
+        return lines, columns
+
+    def size(self):
+        self._size = self._measure()
+        return self._size
+
+    def clear(self):
+        self._buffer.append("\x1b[H\x1b[2J")
+
+    def draw(self, y, x, text, style=None):
+        self._buffer.append(f"\x1b[{y + 1};{x + 1}H{STYLES[style]}{text}\x1b[0m")
+
+    def refresh(self):
+        self._stream.write("".join(self._buffer))
+        self._stream.flush()
+        self._buffer = []
+
+    def key(self):
+        while not msvcrt.kbhit():
+            if self._measure() != self._size:
+                return "resize"
+            time.sleep(0.05)
+        char = msvcrt.getwch()
+        if char in ("\x00", "\xe0"):
+            return SCAN_KEYS.get(msvcrt.getwch(), "")
+        return KEYS.get(char, char)
+
+
+@contextmanager
+def terminal():
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+    mode = ctypes.c_uint32()
+    console = bool(kernel32.GetConsoleMode(handle, ctypes.byref(mode)))
+    if console:
+        kernel32.SetConsoleMode(handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    stream = sys.stdout
+    stream.write("\x1b[?1049h\x1b[?25l")
+    try:
+        yield _Console(stream)
+    finally:
+        stream.write("\x1b[0m\x1b[?25h\x1b[?1049l")
+        stream.flush()
+        if console:
+            kernel32.SetConsoleMode(handle, mode.value)

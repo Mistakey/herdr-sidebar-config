@@ -14,6 +14,10 @@ applies once; Escape cancels. You can also open it with:
 herdr plugin action invoke settings --plugin testy-cool.herdr-sidebar
 ```
 
+On Windows, Herdr needs distinct action ids per platform, so every action in
+this guide ends in `-windows`: `settings-windows`, `refresh-windows`, and
+`clear-windows`.
+
 Plugin preferences are user-owned. Updates retain them, `--text` explicitly
 selects text icons, and uninstall leaves preferences available for a later
 reinstall. Older setup backups are migrated without losing their original bytes.

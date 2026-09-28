@@ -7,7 +7,7 @@ import sys
 import time
 import tomllib
 from pathlib import Path
-from host import Lock
+from host import Lock, entry
 from inactivity import update_inactivity
 from activity_titles import activity_title
 from preferences import load as load_preferences
@@ -299,7 +299,7 @@ def main():
     parser.add_argument("--restore-view", action="store_true", help="restore saved ordering on startup")
     args = parser.parse_args()
     if not os.environ.get("HERDR_PLUGIN_STATE_DIR"):
-        raise RuntimeError("Run through Herdr: herdr plugin action invoke refresh --plugin " + PLUGIN_ID)
+        raise RuntimeError(f"Run through Herdr: herdr plugin action invoke {entry('refresh')} --plugin {PLUGIN_ID}")
     if args.settings or args.settings_open:
         import settings_ui
         settings_ui.open_popup() if args.settings_open else settings_ui.main()

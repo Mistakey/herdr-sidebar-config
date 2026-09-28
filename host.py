@@ -10,12 +10,33 @@ Callers use these names and never branch on the platform themselves:
   wake carries no data; it only makes the scheduler reread its state.
 - ``spawn_detached(argv, log)``: start a process that outlives the hook and
   holds none of Herdr's output pipes.
+- ``terminal()``: a context manager yielding the popup's terminal with
+  ``size()``, ``clear()``, ``draw(y, x, text, style)``, ``refresh()``, and
+  ``key()``. Styles are ``None``, ``"bold"``, or ``"reverse"``; keys are
+  ``"up"``, ``"down"``, ``"left"``, ``"right"``, ``"enter"``, ``"escape"``,
+  ``"backspace"``, ``"resize"``, or one typed character.
+- ``entry(name)``: this platform's manifest id for a logical action or pane.
 """
 import os
+import sys
 
 if os.name == "nt":
-    from host_windows import Lock, WakeListener, connect, spawn_detached, wake
+    from host_windows import Lock, WakeListener, connect, spawn_detached, terminal, wake
+    PLATFORM = "windows"
 else:
-    from host_posix import Lock, WakeListener, connect, spawn_detached, wake
+    from host_posix import Lock, WakeListener, connect, spawn_detached, terminal, wake
+    PLATFORM = "macos" if sys.platform == "darwin" else "linux"
 
-__all__ = ["Lock", "WakeListener", "connect", "spawn_detached", "wake"]
+# Herdr rejects duplicate action/pane ids even when their platforms differ, so
+# Windows declares its own. Keep this map and herdr-plugin.toml in step.
+_POSIX = {"settings": "settings", "refresh": "refresh", "clear": "clear"}
+ENTRIES = {"linux": _POSIX, "macos": _POSIX,
+           "windows": {name: name + "-windows" for name in _POSIX}}
+
+
+def entry(name):
+    return ENTRIES[PLATFORM][name]
+
+
+__all__ = ["ENTRIES", "PLATFORM", "Lock", "WakeListener", "connect", "entry",
+           "spawn_detached", "terminal", "wake"]

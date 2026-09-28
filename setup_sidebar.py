@@ -15,6 +15,7 @@ import tomllib
 from pathlib import Path
 
 from configuration import dimmable_spaces, ghostty_mapping, merge_layout
+import host
 from runtime import PLUGIN_ID, herdr_binary, run_herdr
 
 ROOT = Path(__file__).resolve().parent
@@ -133,7 +134,7 @@ def install(args, binary):
         if check.returncode:
             raise RuntimeError(check.stderr.strip() or check.stdout.strip())
         reload_config(binary)
-        invoke(binary, "refresh")
+        invoke(binary, host.entry("refresh"))
         if not args.text and shutil.which("fc-cache"):
             subprocess.run(["fc-cache", "-f", str(args.font_dir)], check=True, timeout=30)
     except Exception as error:
@@ -180,7 +181,7 @@ def uninstall(args, binary):
     info = plugin_info(binary)
     if info:
         if info["enabled"]:
-            invoke(binary, "clear")
+            invoke(binary, host.entry("clear"))
         run_herdr(binary, "plugin", "disable", PLUGIN_ID)
     for path, entry in state["files"].items():
         if entry.get("user_editable"):
