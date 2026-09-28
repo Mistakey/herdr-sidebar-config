@@ -24,7 +24,9 @@ a claim of zero overhead or a measured benchmark.
 The manifest declares each hook, action, and pane once per platform family.
 Herdr deduplicates action and pane ids without regard to platform, so Windows
 entries carry their own ids; `host.ENTRIES` maps each logical entry (`settings`,
-`refresh`, `clear`) to the current platform's id. The settings popup draws
+`refresh`, `clear`) to the current platform's id. If Herdr later accepts one id
+per platform ([herdrdev/herdr#4702](https://github.com/herdrdev/herdr/discussions/4702)),
+only the manifest and that map change. The settings popup draws
 through the platform layer's terminal: curses on POSIX, `msvcrt` keys and VT
 sequences on Windows.
 
