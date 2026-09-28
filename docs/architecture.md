@@ -76,6 +76,7 @@ Publisher: `plugin:testy-cool.herdr-sidebar`.
 | `hs_working`, `hs_blocked`, `hs_done`, `hs_idle`, `hs_unknown` | Exactly one populated with the native status symbol and task label |
 | `hs_gap` | Blank row after the last agent before another workspace |
 | `hs_terminals` | Names of terminal-only tabs in this workspace |
+| `hs_machine_rule` | Dim divider after this machine's last agent, only with an enabled remote in the client's machine catalog and workspace order |
 | `hs_*_dim` | Mutually exclusive dim versions of agent/group display tokens |
 | `hs_space`, `hs_space_dim` | Mutually exclusive workspace labels in Spaces |
 | `hs_title` | Optional user-owned title override; read but never written or cleared by this plugin |
@@ -112,6 +113,7 @@ interface and never branch on the platform. `host_posix.py` and
 | `WakeListener` / `wake` | private Unix datagram socket | UDP on 127.0.0.1; port in `deadline.port` in the state directory |
 | `spawn_detached` | new session | new process group, no window, only the log handle inherited |
 | `config_home` / `font_dir` | `$XDG_CONFIG_HOME/herdr`; `~/.local/share/fonts` or `~/Library/Fonts` | `%APPDATA%\herdr`; `%LOCALAPPDATA%\Microsoft\Windows\Fonts` |
+| `state_home` | `$XDG_STATE_HOME/herdr` or `~/.local/state/herdr` | `%LOCALAPPDATA%\herdr` |
 | `INTERPRETER_RECORD` | none; `run.sh` runs `python3` | `python-path.txt` in the plugin config directory, read by `run.cmd` |
 | `font_available` (`icons = "auto"`) | `fc-match` names the family | a per-user or machine font registration names an existing file |
 | `Fonts` (setup) | `fc-cache`; Ghostty codepoint map as a managed file | per-user font registration; Windows Terminal's fallback is only read |
