@@ -17,7 +17,7 @@ if sys.version_info < (3, 11):
 import tomllib
 from pathlib import Path
 
-from configuration import dimmable_spaces, merge_layout, restore_layout
+from configuration import dimmable_spaces, merge_layout, restore_layout, settings_binding
 import host
 from runtime import FONT_FAMILY, PLUGIN_ID, herdr_binary, run_herdr
 
@@ -99,7 +99,6 @@ def invoke(binary, action):
 
 
 def plan(args, config_dir):
-    from configuration import settings_binding
     from preferences import patch
     original = read(args.config) or b""
     preferences_path = config_dir / "config.toml"
@@ -203,16 +202,18 @@ def restorations(state, config):
         if entry.get("user_editable"):
             continue
         current, before = read(Path(path)), original(entry)
-        if (path == str(config) and current is not None and current != before
-                and digest(current) != entry["installed_sha256"]):
-            try:
-                result[path] = restore_layout(current.decode("utf-8"),
-                                              (before or b"").decode("utf-8"),
-                                              (ROOT / "sidebar-layout.toml").read_text(encoding="utf-8")).encode("utf-8")
-            except ValueError as error:
-                raise RuntimeError(f"{error} Original contents are in the setup backup.") from error
-        else:
-            result[path] = before
+        result[path] = before
+        if path != str(config) or current is None or current == before:
+            continue
+        # The recorded digest cannot tell: a repeat install over later edits
+        # records the merged file. Compare with what setup alone would write.
+        fragment = (ROOT / "sidebar-layout.toml").read_text(encoding="utf-8")
+        text = (before or b"").decode("utf-8")
+        try:
+            if current.decode("utf-8") != settings_binding(merge_layout(text, fragment)):
+                result[path] = restore_layout(current.decode("utf-8"), text, fragment).encode("utf-8")
+        except ValueError as error:
+            raise RuntimeError(f"{error} Original contents are in the setup backup.") from error
     return result
 
 
