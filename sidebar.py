@@ -19,9 +19,6 @@ STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unkno
 BLANK = "\u2800"
 # Left-edge marker for the focused agent; BLANK keeps unfocused rows aligned.
 FOCUS_BAR = "\u258c"
-# Divider below this machine's last agent when a remote's entries follow. A
-# line, unlike a label, reads the same at the continuation rows' indentation.
-MACHINE_RULE = "┈" * 16
 HISTORY = {
     "codex": (".codex/history.jsonl", "session_id", "text"),
     "claude": (".claude/history.jsonl", "sessionId", "display"),
@@ -155,7 +152,7 @@ def desired_headers(panes, workspaces):
 
 def machine_boundary(order):
     # Herdr lists Local's entries before the first remote's only in native
-    # order; the activity view interleaves machines, so a divider would stray.
+    # order; the activity view interleaves machines, so a gap would stray.
     return order == "workspace" and remote_machine() is not None
 
 
@@ -176,8 +173,7 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
     for pane in panes:
         heading = headers[pane["pane_id"]]
         values = {"hs_group": heading, "hs_tab": None, "hs_logo_focus": None,
-                  "hs_gap": None, "hs_logo": None, "hs_terminals": None,
-                  "hs_machine_rule": None}
+                  "hs_gap": None, "hs_logo": None, "hs_terminals": None}
         values.update({f"hs_{state}": None for state in STATES})
         if pane.get("agent"):
             if heading and previous is not None:
@@ -220,9 +216,10 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             mark = working_glyph if status == "working" else STATES[status]
             values[f"hs_{status}"] = mark + " " + task_label(pane, tabs)
             previous = pane["pane_id"]
-            # This machine's entries end where the first remote's begin.
+            # Every row belongs to an entry and takes its dimming and selection,
+            # so only a blank row separates this machine from the next one.
             if divide_machines and pane["pane_id"] == last_agent:
-                values["hs_machine_rule"] = MACHINE_RULE
+                values["hs_gap"] = BLANK
         # Mutually exclusive tokens let static Herdr styles dim a whole group.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
             values[key + "_dim"] = values[key] if pane["workspace_id"] in inactive_ids else None

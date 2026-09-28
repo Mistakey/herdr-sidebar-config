@@ -77,11 +77,13 @@ and follow [manual removal](docs/setup.md#manual-removal).
 - Each plugin sees and decorates only its own server's panes. Machine labels
   ("Local", "Home") exist only in the viewing client's endpoint catalog and are
   never sent to servers, while tokens are shared by every client viewing a pane:
-  never publish a machine name. The machine divider carries none; it only
-  reads whether this machine's own client catalog has an enabled remote.
-- Keep machine marks out of an entry's first displayed row: Herdr indents that
-  row one cell and the rest three, so a row above the workspace heading shifts
-  the whole group. Labels placed on later rows look like children.
+  never publish a machine name. The machine boundary is only a blank `hs_gap`
+  row, set when this machine's own client catalog has an enabled remote.
+- Every sidebar row belongs to an agent entry and takes its dimming and
+  selection, and Herdr indents an entry's first displayed row one cell and the
+  rest three: a heading above the workspace name shifts the whole group, and a
+  label or rule on later rows looks like that agent's child. Machine headings
+  and dividers were tried and withdrawn for these reasons.
 - Declare every hook once per platform family: POSIX entries keep
   `platforms = ["linux", "macos"]` and `sh run.sh`; Windows entries use
   `["cmd", "/c", '.\run.cmd', …]`. Herdr rejects duplicate action and pane ids

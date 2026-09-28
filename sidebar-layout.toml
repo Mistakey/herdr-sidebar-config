@@ -21,7 +21,6 @@ rows = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_rule", dim = true, fg = "#A8ADB9" }],
 ]
 
 [ui.sidebar.agents.rows_by_agent]
@@ -45,7 +44,6 @@ agy = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_rule", dim = true, fg = "#A8ADB9" }],
 ]
 claude = [
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
@@ -67,7 +65,6 @@ claude = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_rule", dim = true, fg = "#A8ADB9" }],
 ]
 codex = [
   [{ token = "$hs_group", bold = true, dim = false, fg = "#A8ADB9" }, { token = "$hs_group_dim", dim = true, fg = "#A8ADB9" }],
@@ -89,5 +86,4 @@ codex = [
     { token = "$hs_unknown_dim", fg = "#A8ADB9", dim = true },
   ],
   [{ token = "$hs_gap" }],
-  [{ token = "$hs_machine_rule", dim = true, fg = "#A8ADB9" }],
 ]
