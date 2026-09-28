@@ -125,6 +125,11 @@ activity order interleaves machines. Known limits:
 - Existing installs need `setup_sidebar.py install` again to add the two layout
   rows. Until then the tokens are published but not shown.
 - Renames and catalog changes appear at the next normal refresh.
+- Headings are pane tokens, and every client shows a pane's tokens as its own
+  server's plugin wrote them. If a remote machine has an enabled remote of its
+  own, its plugin heads its agents for its own screen, and you see those
+  headings too: an extra `━ Local` above that machine's agents and `━ <its
+  remote>` below them.
 
 ## Manual installation
 

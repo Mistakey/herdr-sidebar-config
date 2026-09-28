@@ -152,7 +152,7 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def machine_remote(order):
+def heading_remote(order):
     # Herdr lists Local's entries before the first remote's only in native
     # order; the activity view interleaves machines, so headings would stray.
     return remote_machine() if order == "workspace" else None
@@ -261,7 +261,7 @@ def refresh(clear=False, restore_view=False):
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
                                branch_length=settings["branch_length"],
-                               remote=None if clear else machine_remote(settings["order"]))
+                               remote=None if clear else heading_remote(settings["order"]))
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []

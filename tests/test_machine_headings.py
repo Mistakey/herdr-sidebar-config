@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from animation import cache_rows
 from runtime import remote_machine
-from sidebar import desired_rows, machine_remote
+from sidebar import desired_rows, heading_remote
 
 ROOT = Path(__file__).resolve().parents[1]
 SPACES = [{"workspace_id": "w1", "label": "one"}, {"workspace_id": "w2", "label": "two"}]
@@ -58,8 +58,8 @@ class RemoteMachineTests(unittest.TestCase):
 
     def test_activity_order_publishes_no_machine_headings(self):
         with patch("sidebar.remote_machine", return_value="Home"):
-            self.assertEqual(machine_remote("workspace"), "Home")
-            self.assertIsNone(machine_remote("activity"))
+            self.assertEqual(heading_remote("workspace"), "Home")
+            self.assertIsNone(heading_remote("activity"))
 
 
 class MachineHeadingRowsTests(unittest.TestCase):
