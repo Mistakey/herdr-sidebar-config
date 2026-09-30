@@ -104,7 +104,7 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertEqual(rows["w1:p1"]["hs_tab"], "main")
         self.assertIsNone(rows["w1:p2"]["hs_tab"])
         self.assertEqual(rows["w1:p3"]["hs_tab"], "\u2800\u2800docs")
-        # Unfocused rows reserve the same cell used by the focus bar.
+        # Provider logos keep a stable leading cell in every selection state.
         self.assertEqual(rows["w1:p1"]["hs_logo"], "├─ \u2800\ue1a1")
         self.assertEqual(rows["w1:p2"]["hs_logo"], "\u2800\u2800└─ \u2800\ue1a0")
         self.assertEqual(rows["w1:p3"]["hs_logo"], "└─ \u2800\ue1a1")
@@ -134,14 +134,15 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertIsNone(faded["w1:p1"]["hs_idle"])
         self.assertTrue(faded["w1:p1"]["hs_idle_dim"].startswith("○ "))
         self.assertIsNone(faded["w1:p1"]["hs_logo_focus"])
-        self.assertIn("▌", faded["w1:p1"]["hs_logo_dim"])
+        self.assertNotIn("▌", faded["w1:p1"]["hs_logo_dim"])
         self.assertTrue(faded["w1:p2"]["hs_working"].startswith("◔ "))
         self.assertIsNone(faded["w1:p2"]["hs_working_dim"])
         bright = desired_rows(panes, spaces, tabs)
         changes = changed_tokens(faded["w1:p1"], bright["w1:p1"])
         self.assertIsNone(changes["hs_idle_dim"])
         self.assertIsNone(changes["hs_logo_dim"])
-        self.assertIsNotNone(changes["hs_logo_focus"])
+        self.assertIsNotNone(changes["hs_logo"])
+        self.assertNotIn("hs_logo_focus", changes)
 
     def test_single_tab_uses_compact_rows_until_a_second_tab_exists(self):
         panes = [

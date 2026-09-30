@@ -17,8 +17,6 @@ from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, run_herdr
 STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"}
 # A braille blank occupies a terminal cell but survives metadata trimming.
 BLANK = "\u2800"
-# Left-edge marker for the focused agent; BLANK keeps unfocused rows aligned.
-FOCUS_BAR = "\u258c"
 HISTORY = {
     "codex": (".codex/history.jsonl", "session_id", "text"),
     "claude": (".claude/history.jsonl", "sessionId", "display"),
@@ -179,17 +177,7 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
                 prefix += ("└" if last_in_tab else "├") + (" " if branch_length == "short" else "─ ")
             else:
                 prefix = "" if heading else BLANK * 2
-            # Herdr joins tokens with " · ", so the focus marker rides on the
-            # logo token instead of taking a token of its own. A separate
-            # focus variant lets the config colour that one row on its own.
-            # The marker sits right before the logo rather than at the start
-            # of the row: Herdr indents an entry's first row by one cell and
-            # the rest by three, so a row-leading marker lands in two
-            # different columns depending on whether a heading is shown.
-            if pane.get("focused"):
-                values["hs_logo_focus"] = prefix + FOCUS_BAR + logo
-            else:
-                values["hs_logo"] = prefix + BLANK + logo
+            values["hs_logo"] = prefix + BLANK + logo
             status = pane.get("agent_status", "unknown")
             if status not in STATES:
                 status = "unknown"
@@ -201,9 +189,6 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             previous = pane["pane_id"]
         dim_group = pane["workspace_id"] in inactive_ids
         dim_agent = dim_group or pane["pane_id"] in inactive_pane_ids
-        if dim_agent and values["hs_logo_focus"]:
-            values["hs_logo"] = values["hs_logo_focus"]
-            values["hs_logo_focus"] = None
         # Keep shared headings bright while another agent is active.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
             dim = dim_group if key in {"hs_group", "hs_tab"} else dim_agent
