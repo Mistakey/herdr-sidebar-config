@@ -35,6 +35,23 @@ command = "my-action"
         self.assertIn("# personal theme", result)
         self.assertEqual(merge_layout(result, FRAGMENT), result)
 
+    def test_machine_label_stays_on_agent_line_without_extra_heading_rows(self):
+        layout = tomllib.loads(FRAGMENT)["ui"]["sidebar"]["agents"]
+        for rows in [layout["rows"], *layout["rows_by_agent"].values()]:
+            names = [[token if isinstance(token, str) else token["token"] for token in row]
+                     for row in rows]
+            self.assertEqual(len(names), 5)
+            self.assertNotIn("machine", names[0])
+            self.assertEqual(sum(row.count("machine") for row in names), 1)
+            agent_row = names[3]
+            self.assertEqual(agent_row.index("machine"), agent_row.index("$hs_logo_dim") + 1)
+            self.assertLess(agent_row.index("machine"), agent_row.index("$hs_working"))
+
+    def test_machine_token_requires_herdr_090(self):
+        manifest = Path(__file__).resolve().parents[1] / "herdr-plugin.toml"
+        version = tomllib.loads(manifest.read_text())["min_herdr_version"]
+        self.assertGreaterEqual(tuple(map(int, version.split("."))), (0, 9, 0))
+
     def test_empty_config_is_valid(self):
         result = merge_layout("", FRAGMENT)
         self.assertEqual(tomllib.loads(result)["ui"]["agent_panel_sort"], "spaces")

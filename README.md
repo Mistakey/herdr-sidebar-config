@@ -15,6 +15,9 @@ Titles and states are demonstration data; the plugin and rendering are real.
 
 - **Find the right agent.** One-tab workspaces stay compact; multiple tabs get a
   tree. Working groups can move to the top without separating their agents.
+- **Tell machines apart.** When you connect another machine, each agent row shows
+  its machine name. A local-only session keeps the current compact rows. Install
+  the plugin on the other machine too if you want its task labels and grouping.
 - **Read the task.** Uses native conversation titles and local fallbacks—not
   another model call.
 - **Recognize Antigravity (AGY), Hermes and Kimchi.** Their own icons and labels
@@ -42,7 +45,7 @@ Titles and states are demonstration data; the plugin and rendering are real.
 
 ## Install
 
-Requires **Herdr 0.8.2+**, **Python 3.11+**, and Git. Icon setup targets **Ghostty
+Requires **Herdr 0.9.0+**, **Python 3.11+**, and Git. Icon setup targets **Ghostty
 on Linux or macOS**. Linux/Ghostty is live-tested; macOS is not yet live-tested.
 
 Run inside a Herdr terminal pane:

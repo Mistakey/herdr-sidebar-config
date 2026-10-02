@@ -9,6 +9,7 @@ rows = [
     { token = "$hs_logo", fg = "#A8ADB9", dim = false },
     { token = "$hs_logo_kimchi", fg = "#FF521D", dim = false },
     { token = "$hs_logo_dim", fg = "#A8ADB9", dim = true },
+    "machine",
     { token = "$hs_working", fg = "#A8ADB9", dim = false },
     { token = "$hs_working_dim", fg = "#A8ADB9", dim = true },
     { token = "$hs_blocked", fg = "#F08080", dim = false },
@@ -31,6 +32,7 @@ agy = [
   [
     { token = "$hs_logo", fg = "#6EA8FE", dim = false },
     { token = "$hs_logo_dim", fg = "#A8ADB9", dim = true },
+    "machine",
     { token = "$hs_working", fg = "#6EA8FE", dim = false },
     { token = "$hs_working_dim", fg = "#A8ADB9", dim = true },
     { token = "$hs_blocked", fg = "#F08080", dim = false },
@@ -51,6 +53,7 @@ claude = [
   [
     { token = "$hs_logo", fg = "#E68A67", dim = false },
     { token = "$hs_logo_dim", fg = "#A8ADB9", dim = true },
+    "machine",
     { token = "$hs_working", fg = "#E68A67", dim = false },
     { token = "$hs_working_dim", fg = "#A8ADB9", dim = true },
     { token = "$hs_blocked", fg = "#F08080", dim = false },
@@ -71,6 +74,7 @@ codex = [
   [
     { token = "$hs_logo", fg = "#A78BFA", dim = false },
     { token = "$hs_logo_dim", fg = "#A8ADB9", dim = true },
+    "machine",
     { token = "$hs_working", fg = "#A78BFA", dim = false },
     { token = "$hs_working_dim", fg = "#A8ADB9", dim = true },
     { token = "$hs_blocked", fg = "#F08080", dim = false },
@@ -91,6 +95,7 @@ hermes = [
   [
     { token = "$hs_logo", fg = "#F5A623", dim = false },
     { token = "$hs_logo_dim", fg = "#A8ADB9", dim = true },
+    "machine",
     { token = "$hs_working", fg = "#F5A623", dim = false },
     { token = "$hs_working_dim", fg = "#A8ADB9", dim = true },
     { token = "$hs_blocked", fg = "#F08080", dim = false },
