@@ -82,7 +82,7 @@
     {"name": "hs_tab_dim", "meaning": "Dimmed tab heading", "consumed_by": "layout"},
     {"name": "hs_logo", "meaning": "Indentation, optional branch and provider mark for unfocused agent rows", "consumed_by": "layout"},
     {"name": "hs_logo_dim", "meaning": "Dimmed variant of hs_logo", "consumed_by": "layout"},
-    {"name": "hs_logo_focus", "meaning": "hs_logo replacement for the focused agent, carrying the U+258C focus bar", "consumed_by": "none", "note": "Published by the runtime but referenced by no row in sidebar-layout.toml; see evidence.md contradiction C1"},
+    {"name": "hs_logo_focus", "meaning": "Retired focus-bar token, always cleared by the runtime", "consumed_by": "none", "note": "Selected rows keep the regular icon and prefix; no layout row consumes this token."},
     {"name": "hs_gap", "meaning": "Braille blank row after the last agent of a workspace", "consumed_by": "layout"},
     {"name": "hs_terminals", "meaning": "Names of terminal-only tabs in the workspace", "consumed_by": "layout"},
     {"name": "hs_workspace_rank", "meaning": "Hidden 12-digit rank used by the activity agent-view sort", "consumed_by": "view"},
@@ -98,7 +98,8 @@
     {"name": "hs_idle", "meaning": "Idle status mark plus task label", "consumed_by": "layout"},
     {"name": "hs_idle_dim", "meaning": "Dimmed idle row", "consumed_by": "layout"},
     {"name": "hs_unknown", "meaning": "Unknown status mark plus task label", "consumed_by": "layout"},
-    {"name": "hs_unknown_dim", "meaning": "Dimmed unknown row", "consumed_by": "layout"}
+    {"name": "hs_unknown_dim", "meaning": "Dimmed unknown row", "consumed_by": "layout"},
+    {"name": "hs_logo_kimchi", "meaning": "hs_logo for a bright Kimchi row, coloured #FF521D by the default rows", "consumed_by": "layout"}
   ],
   "status_glyphs": {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"},
   "spacers": {"indent": "U+2800 braille blank", "focus_bar": "U+258C", "tree": "├─ / └─ (short: ├ / └)"},
@@ -112,13 +113,15 @@
     {"agent": "kimi", "codepoint": "E1A6", "text_label": "KIM", "svg": "assets/svg/kimi.svg", "layout_accent": null},
     {"agent": "kilo", "codepoint": "E1A7", "text_label": "KIL", "svg": "assets/svg/kilo.svg", "layout_accent": null},
     {"agent": "maki", "codepoint": "E1A8", "text_label": "MAK", "svg": "assets/svg/maki.svg", "layout_accent": null},
-    {"agent": "agy", "codepoint": "E1A9", "text_label": "AGY", "svg": "assets/svg/agy.svg", "layout_accent": "#6EA8FE"}
+    {"agent": "agy", "codepoint": "E1A9", "text_label": "AGY", "svg": "assets/svg/agy.svg", "layout_accent": "#6EA8FE"},
+    {"agent": "hermes", "codepoint": "E1AA", "text_label": "HER", "svg": "assets/svg/hermes.svg", "layout_accent": "#F5A623"},
+    {"agent": "kimchi", "codepoint": "E1AB", "text_label": "KCH", "svg": "assets/svg/kimchi.svg", "layout_accent": "#FF521D"}
   ],
   "unknown_agent_mark": "◇",
-  "palette": ["#A8ADB9", "#F08080", "#91C788", "#6EA8FE", "#E68A67", "#A78BFA"],
+  "palette": ["#A8ADB9", "#F08080", "#91C788", "#6EA8FE", "#E68A67", "#A78BFA", "#F5A623", "#FF521D"],
   "fonts": [
-    {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.0.0", "sha256": "910335c407dfa5c4f78f28895836b85c92eff6154c634ced292bc8845466591b", "shipped": true},
-    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "fee6ea4d8cb5463249c5b2e71facbc3eacdc2b03ba5a5c6cfdb69d5c6efbc1a2", "shipped": false}
+    {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.0.0", "sha256": "4a033c7039c458583ef79a84ca4e73f22041ebe23e18cda57c4157e5d1669805", "shipped": true},
+    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "575f010b8e1af5064c9dba76b67209be6561f7c5669349cfdc3da44f9c3012ec", "shipped": false}
   ],
   "loader_styles": {"dots": 10, "orbit": 8, "pulse": 12, "frames_per_second": 8},
   "env": [
@@ -139,7 +142,7 @@
   "managed_paths": [
     {"name": "herdr-layout", "path": "$HERDR_CONFIG_PATH", "probe": ["ROOT / \"sidebar-layout.toml\""], "written": "settings_binding(merge_layout(...))"},
     {"name": "plugin-preferences", "path": "$HERDR_PLUGIN_CONFIG_DIR/config.toml", "probe": ["config_dir / \"config.toml\""], "written": "icons preference only; user_editable in the backup record"},
-    {"name": "ghostty-config", "path": "$XDG_CONFIG_HOME/ghostty/config", "probe": ["ghostty_mapping"], "written": "font-codepoint-map for U+E1A0-U+E1A9; skipped with --text"},
+    {"name": "ghostty-config", "path": "$XDG_CONFIG_HOME/ghostty/config", "probe": ["ghostty_mapping"], "written": "font-codepoint-map for U+E1A0-U+E1AB; skipped with --text"},
     {"name": "font", "path": "$HOME/.local/share/fonts/HerdrSidebarLogos-Regular.ttf", "probe": ["\"dist\" / FONT"], "written": "byte copy of the shipped font; skipped with --text"}
   ],
   "setup_cli": {

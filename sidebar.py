@@ -17,6 +17,9 @@ from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, run_herdr
 STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"}
 # A braille blank occupies a terminal cell but survives metadata trimming.
 BLANK = "\u2800"
+# Herdr accepts rows_by_agent only for agents it knows, and a row holds at most
+# 16 tokens, so an agent that reports itself gets one accent token for its mark.
+ACCENT_LOGOS = {"kimchi": "hs_logo_kimchi"}
 HISTORY = {
     "codex": (".codex/history.jsonl", "session_id", "text"),
     "claude": (".claude/history.jsonl", "sessionId", "display"),
@@ -195,6 +198,10 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
             values[key + "_dim"] = values[key] if dim else None
             if dim:
                 values[key] = None
+        for agent, accent in ACCENT_LOGOS.items():
+            values[accent] = values["hs_logo"] if pane.get("agent") == agent else None
+            if values[accent]:
+                values["hs_logo"] = None
         result[pane["pane_id"]] = values
     return result
 

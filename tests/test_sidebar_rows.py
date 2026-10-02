@@ -144,6 +144,26 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertIsNotNone(changes["hs_logo"])
         self.assertNotIn("hs_logo_focus", changes)
 
+    def test_kimchi_mark_uses_its_own_token_until_it_fades(self):
+        panes = [
+            {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "kimchi", "agent_status": "working"},
+            {"pane_id": "w1:p2", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "claude", "agent_status": "idle"},
+        ]
+        spaces = [{"workspace_id": "w1", "label": "project"}]
+        rows = desired_rows(panes, spaces, {"w1:t1": "main"})
+        kimchi, claude = rows["w1:p1"], rows["w1:p2"]
+        self.assertTrue(kimchi["hs_logo_kimchi"].endswith("\ue1ab"))
+        self.assertIsNone(kimchi["hs_logo"])
+        self.assertTrue(kimchi["hs_working"].startswith("◔ "))
+        self.assertIsNone(claude["hs_logo_kimchi"])
+        self.assertTrue(claude["hs_logo"].endswith("\ue1a0"))
+        faded = desired_rows(panes, spaces, {"w1:t1": "main"}, inactive_pane_ids={"w1:p1"})["w1:p1"]
+        self.assertIsNone(faded["hs_logo_kimchi"])
+        self.assertTrue(faded["hs_logo_dim"].endswith("\ue1ab"))
+        self.assertEqual(set(faded), set(kimchi))
+
     def test_single_tab_uses_compact_rows_until_a_second_tab_exists(self):
         panes = [
             {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "codex"},

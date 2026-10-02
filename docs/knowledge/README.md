@@ -84,4 +84,4 @@ memory.
 | Deadline worker | The single `deadline.py` process that waits on a private Unix datagram socket for the next quiet-period or frame deadline |
 | Quiet period | Time without any working agent in a workspace; at the delay (default 600 s) its tokens switch to their dim variants |
 | Loader | The optional animated braille mark for working agents, off by default, 8 frames per second |
-| PUA | Private use area codepoints U+E1A0–U+E1A9 in the bundled icon font |
+| PUA | Private use area codepoints U+E1A0–U+E1AB in the bundled icon font |

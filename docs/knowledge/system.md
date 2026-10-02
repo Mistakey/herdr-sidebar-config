@@ -65,10 +65,11 @@ the user, or nothing at all.
 | `hs_group`, `hs_group_dim` | Workspace heading on its first agent | layout |
 | `hs_tab`, `hs_tab_dim` | Tab heading on its first agent, when the workspace has more than one actual tab | layout |
 | `hs_logo`, `hs_logo_dim` | Indentation, branch and provider mark on unfocused agent rows | layout |
-| `hs_logo_focus` | `hs_logo` replacement for the focused agent, carrying the U+258C focus bar | nothing — see [evidence.md](evidence.md#contradictions) C1 |
+| `hs_logo_focus` | Retired focus-bar token, always cleared; selected rows keep the regular icon and prefix | nothing |
 | `hs_gap` | Braille blank row after the last agent before another workspace | layout |
 | `hs_terminals` | Names of terminal-only tabs in the workspace | layout |
 | `hs_working`, `hs_blocked`, `hs_done`, `hs_idle`, `hs_unknown` | Exactly one populated with the native status mark and task label | layout |
+| `hs_logo_kimchi` | Replaces `hs_logo` on a bright Kimchi row; Herdr rejects `rows_by_agent` for agents it does not know and caps a row at 16 tokens, so the default rows colour this one token `#FF521D` | layout (default rows) |
 | `hs_*_dim` | Mutually exclusive dim twins of group/tab/logo/status tokens | layout |
 | `hs_workspace_rank` | Hidden 12-digit rank for the activity agent-view sort | view sort |
 | `hs_space`, `hs_space_dim` | Workspace label in Spaces, bright or dim | Spaces fragment |
@@ -102,8 +103,8 @@ updates and removal; the installer writes only the `icons` key when it is absent
 
 ## Provider marks
 
-Ten provider marks ship in the private use area U+E1A0–U+E1A9, in a fixed order
-that the font build enforces. Only three of them get a per-provider color in the
+Twelve provider marks ship in the private use area U+E1A0–U+E1AB, in a fixed order
+that the font build enforces. Five of them get a per-provider color in the
 shipped layout; every other mapped agent uses the neutral rows, and any unmapped
 agent renders `◇`.
 
@@ -119,21 +120,23 @@ agent renders `◇`.
 | U+E1A7 | kilo | `KIL` | neutral |
 | U+E1A8 | maki | `MAK` | neutral |
 | U+E1A9 | agy | `AGY` | `#6EA8FE` |
+| U+E1AA | hermes | `HER` | `#F5A623` |
+| U+E1AB | kimchi | `KCH` | `#FF521D` |
 
 Fonts: `dist/HerdrSidebarLogos-Regular.ttf` (family "Herdr Sidebar Logos", the
-file setup installs; `claude`, `codex` and `agy` are redrawn larger) and
+file setup installs; `claude`, `codex`, `agy`, `hermes` and `kimchi` are redrawn larger) and
 `dist/HerdrHarnessLogos-Regular.ttf` (family "Herdr Harness Logos", the build
 intermediate). Hashes and glyph metrics are in [registry.json](registry.json).
 
 ## Surfaces
 
-Herdr ships display tokens into an icon font, so the rendering styles available are limited. Colors: `#A8ADB9` neutral, `#F08080` blocked, `#91C788` done, plus the three provider accents above. Every dim variant is neutral gray with `dim = true`. The layout uses only `fg`, `dim`, `bold` — no background, italic or underline.
+Herdr ships display tokens into an icon font, so the rendering styles available are limited. Colors: `#A8ADB9` neutral, `#F08080` blocked, `#91C788` done, plus the five provider accents above. Every dim variant is neutral gray with `dim = true`. The layout uses only `fg`, `dim`, `bold` — no background, italic or underline.
 
 | Surface | Content |
 | --- | --- |
 | Hooks | 1 startup (`--restore-view`), 1 pane (`settings` popup), 3 actions (`settings`, `refresh`, `clear`), 14 events, deliberately no `pane.updated` |
 | Setup CLI | `install` / `uninstall` / `doctor` with `--dry-run`, `--json`, `--text`, `--config`, `--ghostty-config`, `--font-dir`, `--state-dir`; exit 0 success, 1 error or doctor warning, 2 bad arguments; statuses `planned`, `installed`, `removed`, `ok`, `needs_attention`, `error` |
-| Managed files | the Herdr layout, the plugin preferences file, the Ghostty config line `font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos`, and the installed font (the last two are skipped with `--text`) |
+| Managed files | the Herdr layout, the plugin preferences file, the Ghostty config line `font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos`, and the installed font (the last two are skipped with `--text`) |
 | Backup record | `<state dir>/install.json`: per-file `before` (base64 original or null), `installed_sha256`, optional `user_editable`; renamed to `uninstalled.json` after removal |
 | Doctor checks | `plugin_enabled`, `layout_matches`, `workspace_dimming`, `workspace_sort`, `latest_hook_succeeded`, `preferences_valid`, `icon_mode_valid`, plus `font_installed` and `ghostty_mapping` in font mode |
 | Runtime environment | `HERDR_PLUGIN_STATE_DIR`, `HERDR_PLUGIN_CONFIG_DIR`, `HERDR_PLUGIN_ID`, `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH`, `HERDR_ENV`, `HERDR_CONFIG_PATH`, `XDG_CONFIG_HOME`, `CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `PI_CODING_AGENT_DIR` |
