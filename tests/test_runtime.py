@@ -17,6 +17,10 @@ class RuntimeTests(unittest.TestCase):
                 Path(directory, "config.toml").write_text('icons = "text"\n')
                 self.assertEqual(icon_mode(), "text")
                 self.assertEqual(logo_for("codex", "text"), "AI")
+                self.assertEqual(logo_for("hermes", "text"), "HER")
+                self.assertEqual(logo_for("hermes", "font"), "\ue1aa")
+                self.assertEqual(logo_for("kimchi", "text"), "KCH")
+                self.assertEqual(logo_for("kimchi", "font"), "\ue1ab")
                 Path(directory, "config.toml").write_text('icons = "typo"\n')
                 with self.assertRaises(RuntimeError):
                     icon_mode()

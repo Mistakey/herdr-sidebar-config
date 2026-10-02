@@ -17,8 +17,9 @@ from runtime import PLUGIN_ID, herdr_binary, icon_mode, logo_for, run_herdr
 STATES = {"working": "◔", "blocked": "?", "done": "✓", "idle": "○", "unknown": "·"}
 # A braille blank occupies a terminal cell but survives metadata trimming.
 BLANK = "\u2800"
-# Left-edge marker for the focused agent; BLANK keeps unfocused rows aligned.
-FOCUS_BAR = "\u258c"
+# Herdr accepts rows_by_agent only for agents it knows, and a row holds at most
+# 16 tokens, so an agent that reports itself gets one accent token for its mark.
+ACCENT_LOGOS = {"kimchi": "hs_logo_kimchi"}
 HISTORY = {
     "codex": (".codex/history.jsonl", "session_id", "text"),
     "claude": (".claude/history.jsonl", "sessionId", "display"),
@@ -101,6 +102,9 @@ def task_label(pane, tabs):
     tokens = pane.get("tokens") or {}
     if tokens.get("hs_title"):
         return tokens["hs_title"]
+    saved = pane.get("saved_context")
+    if isinstance(saved, dict) and saved.get("title") and not saved.get("detached"):
+        return saved["title"]
     native = activity_title(pane)
     if native:
         return native
@@ -135,6 +139,15 @@ def task_label(pane, tabs):
         pane.get("agent"), f"{pane.get('agent', 'Agent')} session")
 
 
+def with_pane_name(pane, label):
+    """Prefix a pane's own name, unless the label already starts with it."""
+    name = (pane.get("name") or pane.get("label") or "").strip()
+    normalize = lambda text: text.replace("-", " ").casefold()
+    if not name or normalize(label).startswith(normalize(name)):
+        return label
+    return name + " - " + label
+
+
 def desired_headers(panes, workspaces):
     names = {w["workspace_id"]: w["label"] for w in workspaces}
     seen = set()
@@ -149,7 +162,7 @@ def desired_headers(panes, workspaces):
     return result
 
 
-def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard"):
+def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset(), working_glyph="◔", branch_length="standard", pane_names=False, inactive_pane_ids=frozenset()):
     headers = desired_headers(panes, workspaces)
     groups = {}
     tab_ids = {}
@@ -190,28 +203,28 @@ def desired_rows(panes, workspaces, tabs, icons="font", inactive_ids=frozenset()
                 prefix += ("└" if last_in_tab else "├") + (" " if branch_length == "short" else "─ ")
             else:
                 prefix = "" if heading else BLANK * 2
-            # Herdr joins tokens with " · ", so the focus marker rides on the
-            # logo token instead of taking a token of its own. A separate
-            # focus variant lets the config colour that one row on its own.
-            # The marker sits right before the logo rather than at the start
-            # of the row: Herdr indents an entry's first row by one cell and
-            # the rest by three, so a row-leading marker lands in two
-            # different columns depending on whether a heading is shown.
-            if pane.get("focused"):
-                values["hs_logo_focus"] = prefix + FOCUS_BAR + logo
-            else:
-                values["hs_logo"] = prefix + BLANK + logo
+            values["hs_logo"] = prefix + BLANK + logo
             status = pane.get("agent_status", "unknown")
             if status not in STATES:
                 status = "unknown"
             mark = working_glyph if status == "working" else STATES[status]
-            values[f"hs_{status}"] = mark + " " + task_label(pane, tabs)
+            label = task_label(pane, tabs)
+            if pane_names:
+                label = with_pane_name(pane, label)
+            values[f"hs_{status}"] = mark + " " + label
             previous = pane["pane_id"]
-        # Mutually exclusive tokens let static Herdr styles dim a whole group.
+        dim_group = pane["workspace_id"] in inactive_ids
+        dim_agent = dim_group or pane["pane_id"] in inactive_pane_ids
+        # Keep shared headings bright while another agent is active.
         for key in ["hs_group", "hs_tab", "hs_logo", *[f"hs_{s}" for s in STATES]]:
-            values[key + "_dim"] = values[key] if pane["workspace_id"] in inactive_ids else None
-            if pane["workspace_id"] in inactive_ids:
+            dim = dim_group if key in {"hs_group", "hs_tab"} else dim_agent
+            values[key + "_dim"] = values[key] if dim else None
+            if dim:
                 values[key] = None
+        for agent, accent in ACCENT_LOGOS.items():
+            values[accent] = values["hs_logo"] if pane.get("agent") == agent else None
+            if values[accent]:
+                values["hs_logo"] = None
         result[pane["pane_id"]] = values
     return result
 
@@ -236,6 +249,22 @@ def refresh(clear=False, restore_view=False):
         tabs = {t["tab_id"]: t["label"] for t in snapshot["tabs"]}
         settings_path = Path(os.environ.get("HERDR_PLUGIN_CONFIG_DIR", str(state))) / "config.toml"
         settings = load_preferences(settings_path)
+        from conversation_context import collect, hibernate_records, read_json, save_json, tab_changes
+        context_path = state / "context.json"
+        context = collect(panes, read_json(context_path), hibernate_records(), now=time.time()) if not clear else {}
+        if settings["conversation_titles"] and not clear:
+            for tab_id, previous_label, title in tab_changes(snapshot["tabs"], context):
+                # A user rename can race the snapshot. Never overwrite it.
+                current = run_herdr(herdr, "tab", "get", tab_id)["result"]["tab"]
+                if current.get("label") != previous_label:
+                    context["owned_tabs"].pop(tab_id, None)
+                    continue
+                run_herdr(herdr, "tab", "rename", tab_id, title)
+                context["owned_tabs"][tab_id] = {"label": title}
+                tabs[tab_id] = title
+        if not clear:
+            save_json(context_path, context)
+            panes = [dict(pane, saved_context=context["records"].get(pane["pane_id"])) for pane in panes]
         activity = update_inactivity([w["workspace_id"] for w in workspaces], panes,
                                      read_state(state / "activity.json"), now=time.time(),
                                      timeout=settings.get("inactive_after_seconds", 600))
@@ -244,7 +273,9 @@ def refresh(clear=False, restore_view=False):
         animated = settings["animated_loaders"] and not clear
         desired = desired_rows(ordered_panes, workspaces, tabs, icon_mode(), activity.inactive_ids,
                                working_glyph=glyph(time.monotonic(), settings["loader_style"]) if animated else "◔",
-                               branch_length=settings["branch_length"])
+                               branch_length=settings["branch_length"],
+                               pane_names=settings["pane_names"],
+                               inactive_pane_ids=activity.inactive_pane_ids)
         for pane in panes:
             desired[pane["pane_id"]]["hs_workspace_rank"] = ranks.get(pane["workspace_id"]) if pane.get("agent") else None
         rows = cache_rows(panes, desired, settings["loader_style"]) if animated else []
@@ -267,7 +298,8 @@ def refresh(clear=False, restore_view=False):
             wid = workspace["workspace_id"]
             dim = wid in activity.inactive_ids
             wanted = {"hs_space": None if dim else workspace["label"],
-                      "hs_space_dim": workspace["label"] if dim else None}
+                      "hs_space_dim": workspace["label"] if dim else None,
+                      "hs_parked": None}
             if clear:
                 wanted = dict.fromkeys(wanted)
             changes = changed_tokens(workspace.get("tokens") or {}, wanted)
@@ -297,12 +329,18 @@ def main():
     parser.add_argument("--settings", action="store_true", help="run the settings popup")
     parser.add_argument("--settings-open", action="store_true", help="open the settings popup")
     parser.add_argument("--restore-view", action="store_true", help="restore saved ordering on startup")
+    parser.add_argument("--context", action="store_true", help="show saved conversation context")
+    parser.add_argument("--context-open", action="store_true", help="open saved context for the selected tab")
     args = parser.parse_args()
     if not os.environ.get("HERDR_PLUGIN_STATE_DIR"):
         raise RuntimeError("Run through Herdr: herdr plugin action invoke refresh --plugin " + PLUGIN_ID)
     if args.settings or args.settings_open:
         import settings_ui
         settings_ui.open_popup() if args.settings_open else settings_ui.main()
+        return
+    if args.context or args.context_open:
+        import context_ui
+        context_ui.open_popup() if args.context_open else context_ui.main()
         return
     refresh(args.clear, restore_view=args.restore_view)
 
