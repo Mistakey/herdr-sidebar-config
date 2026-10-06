@@ -161,7 +161,7 @@ Set `icons` in the plugin config directory's `config.toml`:
 
 | Value | Behavior |
 | --- | --- |
-| `"font"` | Use the bundled U+E1A0–U+E1A8 marks; setup's Ghostty default |
+| `"font"` | Use the bundled U+E1A0–U+E1AA marks; setup's Ghostty default |
 | `"text"` | Use short labels; selected by setup's `--text` |
 | `"auto"` | Default without setup: use font mode if the font is installed (`fc-match` finds the exact family; on Windows, a font registration names it), otherwise text |
 

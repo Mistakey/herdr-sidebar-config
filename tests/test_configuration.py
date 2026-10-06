@@ -3,7 +3,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from configuration import ghostty_mapping, merge_layout, restore_layout, settings_binding
+from configuration import GHOSTTY_MAPPING, ghostty_mapping, merge_layout, restore_layout, settings_binding
 from setup_sidebar import digest, edited_files
 
 FRAGMENT = (Path(__file__).resolve().parents[1] / "sidebar-layout.toml").read_text()
@@ -54,6 +54,15 @@ command = "my-action"
         result = ghostty_mapping(original)
         self.assertTrue(result.startswith(original.rstrip()))
         self.assertEqual(ghostty_mapping(result), result)
+
+    def test_font_mapping_upgrades_both_previous_ranges_without_duplicates(self):
+        unrelated = "font-codepoint-map = U+E200-U+E210=Other Icons\n"
+        for end in ("E1A8", "E1A9"):
+            with self.subTest(end=end):
+                original = f"font-codepoint-map = U+E1A0-U+{end}=Herdr Sidebar Logos\n" + unrelated
+                result = ghostty_mapping(original)
+                self.assertEqual(result, GHOSTTY_MAPPING + "\n" + unrelated)
+                self.assertEqual(ghostty_mapping(result), result)
 
     def test_restore_keeps_later_edits_and_undoes_only_the_sidebar(self):
         original = '''# personal theme

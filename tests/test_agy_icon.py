@@ -1,6 +1,6 @@
 import unittest
 from runtime import logo_for
-from configuration import ghostty_mapping
+from configuration import GHOSTTY_MAPPING, ghostty_mapping
 
 
 class AgyIconTests(unittest.TestCase):
@@ -12,5 +12,5 @@ class AgyIconTests(unittest.TestCase):
         old = 'font-codepoint-map = U+E1A0-U+E1A8=Herdr Sidebar Logos\n'
         updated = ghostty_mapping(old)
         self.assertEqual(updated.count('font-codepoint-map'), 1)
-        self.assertIn('E1A9', updated)
+        self.assertIn(GHOSTTY_MAPPING, updated)
         self.assertEqual(ghostty_mapping(updated), updated)
