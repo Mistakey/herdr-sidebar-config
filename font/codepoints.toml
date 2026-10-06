@@ -1,5 +1,5 @@
 family = "Herdr Harness Logos"
-version = "1.2.0"
+version = "1.3.0"
 
 [glyphs]
 claude = "E1A0"
@@ -12,3 +12,4 @@ kimi = "E1A6"
 kilo = "E1A7"
 maki = "E1A8"
 agy = "E1A9"
+pi = "E1AA"
