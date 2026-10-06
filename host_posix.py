@@ -203,6 +203,9 @@ class Fonts:
         if shutil.which("fc-cache"):
             subprocess.run(["fc-cache", "-f", str(self._path.parent)], check=True, timeout=30)
 
+    def prior(self):
+        return None
+
     def release(self):
         pass
 

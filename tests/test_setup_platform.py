@@ -1,8 +1,11 @@
 """Setup's platform contracts: default paths, entry ids, font detection and records."""
 import argparse
+from contextlib import ExitStack
+import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import tomllib
 import unittest
@@ -180,6 +183,81 @@ class WindowsFontTests(unittest.TestCase):
         self.assertEqual(prior, str(self.font))
         self.host_windows.unregister_font(Path(self.directory.name) / "other.ttf", FONT_FAMILY, prior)
         self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(self.font)})
+
+    def _setup_args(self):
+        args = plan_args(self.directory.name, text=False)
+        args.font_dir = self.font.parent
+        args.state_dir = self.font.parent / "backup"
+        args.dry_run, args.json = False, True
+        return args
+
+    def _setup_api(self):
+        stack = ExitStack()
+        self.addCleanup(stack.close)
+        stack.enter_context(patch.object(setup_sidebar, "plugin_info", return_value={
+            "plugin_root": str(ROOT), "enabled": True}))
+        stack.enter_context(patch.object(setup_sidebar, "plugin_config_dir",
+                                        return_value=self.font.parent / "plugin"))
+        stack.enter_context(patch.object(setup_sidebar, "run_herdr", return_value={
+            "result": {"status": "applied"}}))
+        stack.enter_context(patch.object(setup_sidebar.subprocess, "run", return_value=
+                                        subprocess.CompletedProcess([], 0, "", "")))
+        stack.enter_context(patch.object(setup_sidebar, "emit"))
+        return stack.enter_context(patch.object(setup_sidebar, "invoke"))
+
+    def test_install_reinstall_uninstall_restores_registration_at_the_same_path(self):
+        self.host_windows.register_font(self.font, FONT_FAMILY)
+        args = self._setup_args()
+        self._setup_api()
+        setup_sidebar.install(args, "herdr")
+        setup_sidebar.install(args, "herdr")
+        setup_sidebar.uninstall(args, "herdr")
+        self.assertEqual(self.font.read_bytes(), b"font")
+        self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(self.font)})
+
+    def test_failed_install_backs_up_registration_before_refresh(self):
+        prior = self.font.parent / "previous.ttf"
+        self.host_windows.register_font(prior, FONT_FAMILY)
+        args = self._setup_args()
+        invoke = self._setup_api()
+        invoke.side_effect = RuntimeError("refresh failed")
+        with self.assertRaisesRegex(RuntimeError, "refresh failed"):
+            setup_sidebar.install(args, "herdr")
+        state = json.loads((args.state_dir / "install.json").read_text(encoding="utf-8"))
+        self.assertEqual(state.get("font"), {"prior": str(prior)})
+        invoke.side_effect = None
+        setup_sidebar.uninstall(args, "herdr")
+        self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(prior)})
+
+    def test_registration_failure_then_retry_keeps_the_first_backup(self):
+        prior = self.font.parent / "previous.ttf"
+        self.host_windows.register_font(prior, FONT_FAMILY)
+        args = self._setup_args()
+        self._setup_api()
+        register = self.host_windows.Fonts.register
+
+        def interrupted(fonts):
+            register(fonts)
+            raise RuntimeError("registration interrupted")
+
+        with patch.object(self.host_windows.Fonts, "register", interrupted):
+            with self.assertRaisesRegex(RuntimeError, "registration interrupted"):
+                setup_sidebar.install(args, "herdr")
+        self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(self.font)})
+        setup_sidebar.install(args, "herdr")
+        state = json.loads((args.state_dir / "install.json").read_text(encoding="utf-8"))
+        self.assertEqual(state["font"], {"prior": str(prior)})
+        setup_sidebar.uninstall(args, "herdr")
+        self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(prior)})
+
+    def test_install_uninstall_removes_a_new_font_and_registration(self):
+        self.font.unlink()
+        args = self._setup_args()
+        self._setup_api()
+        setup_sidebar.install(args, "herdr")
+        setup_sidebar.uninstall(args, "herdr")
+        self.assertFalse(self.font.exists())
+        self.assertEqual(self._values(), {})
 
 
 @unittest.skipUnless(WINDOWS, "Windows Terminal settings")

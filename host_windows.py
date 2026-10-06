@@ -309,6 +309,15 @@ def _value_name(family):
     return family + " Regular (TrueType)"
 
 
+def font_registration(family):
+    """Read this user's registration before setup releases or replaces it."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, FONTS_KEY) as key:
+            return winreg.QueryValueEx(key, _value_name(family))[0]
+    except FileNotFoundError:
+        return None
+
+
 def register_font(path, family):
     """Register ``path`` for this user; return the value it replaced, if any."""
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, FONTS_KEY) as key:
@@ -369,6 +378,9 @@ class Fonts:
 
     def files(self):
         return {}
+
+    def prior(self):
+        return font_registration(self._family)
 
     def release(self):
         # Windows' font cache holds a registered file open; it lets go about

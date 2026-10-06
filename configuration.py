@@ -124,8 +124,8 @@ def _owned(name):
     return name == "ui.sidebar.spaces" or name == "ui.sidebar.agents" or name.startswith("ui.sidebar.agents.")
 
 
-def _binding(block):
-    return f'command = "{PLUGIN_ID}.' in block
+def _binding(block, binding):
+    return binding is not None and tomllib.loads(block).get("keys", {}).get("command") == [binding]
 
 
 def restore_layout(text, original, fragment):
@@ -152,10 +152,14 @@ def restore_layout(text, original, fragment):
         ui.pop("agent_panel_sort", None)
     if not ui and "ui" not in before:
         expected.pop("ui")
-    added = not any(_binding(original[a:b]) for a, b, name in sections(original) if name == "keys.command")
+    # Reconstruct only the shortcut setup would have added. Other actions from
+    # this plugin, and a shortcut the user changed later, remain user-owned.
+    installed_commands = tomllib.loads(settings_binding(original)).get("keys", {}).get("command", [])
+    original_commands = before.get("keys", {}).get("command", [])
+    binding = installed_commands[-1] if len(installed_commands) > len(original_commands) else None
     keys = expected.get("keys", {})
-    if added and "command" in keys:
-        keys["command"] = [c for c in keys["command"] if not str(c.get("command", "")).startswith(PLUGIN_ID + ".")]
+    if binding is not None and "command" in keys:
+        keys["command"] = [c for c in keys["command"] if c != binding]
         if not keys["command"] and "command" not in before.get("keys", {}):
             keys.pop("command")
             if not keys and "keys" not in before:
@@ -167,7 +171,7 @@ def restore_layout(text, original, fragment):
     if preamble and preamble not in original:
         result = re.sub(r"(?m)^" + re.escape(preamble) + r"\r?\n", "", result, count=1)
     for start, end, name in reversed(sections(result)):
-        if _owned(name) or (added and name == "keys.command" and _binding(result[start:end])):
+        if _owned(name) or (name == "keys.command" and _binding(result[start:end], binding)):
             result = result[:start] + result[end:]
     setting = re.compile(r'(?m)^[ \t]*agent_panel_sort[ \t]*=.*\n?')
     old = next((setting.search(original[a:b]) for a, b, name in sections(original) if name == "ui"), None)

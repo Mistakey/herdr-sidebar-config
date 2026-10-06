@@ -69,10 +69,11 @@ Backups contain original file bytes, including any private values already in
 your config. They are local files written with restrictive permissions; never
 publish them. Repeated installs retain the first backup. Later edits to the Herdr
 config, such as a new theme, are kept: setup merges the layout into the current
-file again, and removal restores only the sidebar tables, `agent_panel_sort`, and
-the settings shortcut from the backup (the whole original file when nothing else
-changed). Setup and removal stop if another managed file (font, interpreter
-record, Ghostty config) has since changed; editable plugin preferences are
+file again, and removal restores only the sidebar tables and `agent_panel_sort`
+from the backup (the whole original file when nothing else changed). It removes
+only the settings shortcut setup added, and keeps it if you changed it; other
+shortcuts to this plugin's actions stay. Setup and removal stop if another managed
+file (font, interpreter record, Ghostty config) has since changed; editable plugin preferences are
 excluded from that guard and from restoration. An interrupted setup retains its backup for
 inspection and recovery. The helper is intended for one active session at a
 time; other running sessions that share the config may need their own refresh.
@@ -88,8 +89,9 @@ The record is a managed file: uninstall removes it and refuses if it was edited.
 
 In font mode, setup copies the font to your user font directory and registers it
 for your user; no administrator rights are needed. Uninstall removes both, and
-restores an earlier registration of the same name if one existed. Windows'
-font cache keeps a registered font file open, so setup releases the registration
+restores an earlier registration of the same name if one existed. That registration
+is backed up before any changes, so a failed setup or a repeat install retains it.
+Windows' font cache keeps a registered font file open, so setup releases the registration
 before replacing or removing the file.
 
 Setup never edits Windows Terminal's `settings.json`. Add the fallback yourself:

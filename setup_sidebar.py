@@ -146,9 +146,14 @@ def install(args, binary):
         entry["installed_sha256"] = digest(data)
         if path == config_dir / "config.toml":
             entry["user_editable"] = True
+    font = fonts(args) if not args.text else None
+    if font and "font" not in state:
+        # Capture and persist the first registration before release, file writes,
+        # or any Herdr call can fail. Retries retain this original value.
+        state["font"] = {"prior": font.prior()}
     write(record, json.dumps(state, indent=2).encode())
     if args.font_dir / FONT in changes:
-        fonts(args).release()
+        font.release()
     for path, data in changes.items():
         write(path, data)
     try:
@@ -162,12 +167,8 @@ def install(args, binary):
             raise RuntimeError(check.stderr.strip() or check.stdout.strip())
         reload_config(binary)
         invoke(binary, host.entry("refresh"))
-        if not args.text:
-            prior = fonts(args).register()
-            # Repeated installs keep the registration that predates the first.
-            if "font" not in state:
-                state["font"] = {"prior": prior}
-                write(record, json.dumps(state, indent=2).encode())
+        if font:
+            font.register()
     except Exception as error:
         # The backup is retained for an explicit uninstall/retry after an API failure.
         raise RuntimeError(f"Setup did not finish: {error}. Config backups are in {record}. Run doctor or uninstall.") from error

@@ -2,6 +2,9 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+import host
 
 from configuration import ghostty_mapping, merge_layout, restore_layout, settings_binding
 from setup_sidebar import digest, edited_files
@@ -87,6 +90,37 @@ command = "my-action"
         installed = settings_binding(merge_layout(original, FRAGMENT))
         result = restore_layout(installed + '\n[theme]\nname = "dracula"\n', original, FRAGMENT)
         self.assertEqual(tomllib.loads(result)["keys"], tomllib.loads(original)["keys"])
+
+    def test_restore_preserves_other_plugin_actions_before_and_after_install(self):
+        original = ('[[keys.command]]\nkey = "prefix+r"\ntype = "plugin_action"\n'
+                    'command = "testy-cool.herdr-sidebar.refresh"\n')
+        later = ('\n[[keys.command]]\nkey = "prefix+x"\ntype = "plugin_action"\n'
+                 'command = "testy-cool.herdr-sidebar.clear-windows"\n')
+        for before in ("", original):
+            with self.subTest(original=before):
+                installed = settings_binding(merge_layout(before, FRAGMENT))
+                restored = restore_layout(installed + later, before, FRAGMENT)
+                self.assertEqual(tomllib.loads(restored), tomllib.loads(before + later))
+
+    def test_restore_preserves_a_settings_shortcut_the_user_modified(self):
+        installed = settings_binding(merge_layout("", FRAGMENT))
+        for old, new in [('key = "prefix+comma"', 'key = "prefix+s"'),
+                         ('description = "Sidebar settings"', 'description = "My settings"')]:
+            with self.subTest(change=new):
+                edited = installed.replace(old, new)
+                restored = restore_layout(edited, "", FRAGMENT)
+                self.assertEqual(tomllib.loads(restored).get("keys"), tomllib.loads(edited)["keys"])
+
+    def test_restore_matches_parsed_shortcut_on_both_platforms(self):
+        later = ('\n[[keys.command]]\nkey = "prefix+x"\ncommand = "mine"\n'
+                 '# command = "testy-cool.herdr-sidebar.settings"\n')
+        for platform in ("linux", "windows"):
+            with self.subTest(platform=platform), patch.object(host, "PLATFORM", platform):
+                installed = settings_binding(merge_layout("", FRAGMENT))
+                # Equivalent TOML syntax is still the setup-owned binding.
+                edited = (installed + later).replace('key = "prefix+comma"', "key='prefix+comma'")
+                restored = restore_layout(edited, "", FRAGMENT)
+                self.assertEqual(tomllib.loads(restored), tomllib.loads(later))
 
     def test_restore_handles_crlf(self):
         original = '[theme]\r\nname = "tokyo-night"\r\n'
