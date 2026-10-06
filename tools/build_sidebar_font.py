@@ -10,7 +10,7 @@ except ImportError:
 
 def build(output=None):
     font = TTFont(ROOT / "dist/HerdrHarnessLogos-Regular.ttf")
-    for name in ("claude", "codex", "agy"):
+    for name in ("claude", "codex", "agy", "pi"):
         source = ROOT / (
             "font/sidebar/codex.svg" if name == "codex" else f"assets/svg/{name}.svg"
         )
@@ -19,8 +19,8 @@ def build(output=None):
         font["glyf"][name] = glyph
         font["hmtx"].metrics[name] = (600, glyph.xMin)
     names = {
-        1: "Herdr Sidebar Logos", 2: "Regular", 3: "herdr-sidebar-logos:1.1.0",
-        4: "Herdr Sidebar Logos Regular", 5: "Version 1.1.0",
+        1: "Herdr Sidebar Logos", 2: "Regular", 3: "herdr-sidebar-logos:1.2.0",
+        4: "Herdr Sidebar Logos Regular", 5: "Version 1.2.0",
         6: "HerdrSidebarLogos-Regular",
     }
     for record in font["name"].names:
@@ -30,6 +30,7 @@ def build(output=None):
     font["OS/2"].sTypoAscender = font["OS/2"].usWinAscent = 1020
     font["hhea"].descent = font["OS/2"].sTypoDescender = -300
     font["OS/2"].usWinDescent = 300
+    font["head"].fontRevision = 1.2
     font["head"].modified = FONT_TIMESTAMP
     font.recalcTimestamp = False
     output = output or ROOT / "dist/HerdrSidebarLogos-Regular.ttf"
