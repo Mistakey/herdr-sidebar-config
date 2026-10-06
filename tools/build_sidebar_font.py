@@ -19,8 +19,8 @@ def build(output=None):
         font["glyf"][name] = glyph
         font["hmtx"].metrics[name] = (600, glyph.xMin)
     names = {
-        1: "Herdr Sidebar Logos", 2: "Regular", 3: "herdr-sidebar-logos:1.0.0",
-        4: "Herdr Sidebar Logos Regular", 5: "Version 1.0.0",
+        1: "Herdr Sidebar Logos", 2: "Regular", 3: "herdr-sidebar-logos:1.1.0",
+        4: "Herdr Sidebar Logos Regular", 5: "Version 1.1.0",
         6: "HerdrSidebarLogos-Regular",
     }
     for record in font["name"].names:

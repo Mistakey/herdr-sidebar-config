@@ -117,9 +117,12 @@ def merge_layout(text, fragment):
     return result
 
 
+GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1AA=Herdr Sidebar Logos"
+
+
 def ghostty_mapping(text):
-    text = text.replace("U+E1A0-U+E1A8=Herdr Sidebar Logos", "U+E1A0-U+E1A9=Herdr Sidebar Logos")
-    mapping = "font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos"
-    if mapping in text.splitlines():
+    for end in ("E1A8", "E1A9"):
+        text = text.replace(f"U+E1A0-U+{end}=Herdr Sidebar Logos", "U+E1A0-U+E1AA=Herdr Sidebar Logos")
+    if GHOSTTY_MAPPING in text.splitlines():
         return text
-    return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + mapping + "\n"
+    return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + GHOSTTY_MAPPING + "\n"

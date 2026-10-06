@@ -1,0 +1,4 @@
+<!-- Monochrome geometry from Pi's terminal logo; see THIRD_PARTY_NOTICES.md. -->
+<svg viewBox="0 0 4 4" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0H3V2H2V1H1V2H2V3H1V4H0Z M3 2H4V4H3Z"/>
+</svg>
