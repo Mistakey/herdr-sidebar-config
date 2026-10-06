@@ -33,6 +33,7 @@ STABLE_GLYPH_ORDER = (
     "kilo",
     "maki",
     "agy",
+    "pi",
 )
 
 
