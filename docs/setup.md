@@ -3,6 +3,9 @@
 Use the [README quick start](../README.md#install) for the supported installation
 flow. Run setup from the same checkout and Herdr session each time.
 
+Operational boundaries, live-verification steps and recovery procedures are in
+[the runbooks](knowledge/runbooks.md).
+
 ## Files setup manages
 
 Open **Sidebar settings** from the command palette or press `prefix+,` (setup
@@ -16,7 +19,7 @@ herdr plugin action invoke settings --plugin testy-cool.herdr-sidebar
 
 On Windows, Herdr needs distinct action ids per platform, so every action in
 this guide ends in `-windows`: `settings-windows`, `refresh-windows`, and
-`clear-windows`.
+`clear-windows`, and `context-windows`.
 
 Plugin preferences are user-owned. Updates retain them, `--text` explicitly
 selects text icons, and uninstall leaves preferences available for a later
@@ -26,6 +29,11 @@ reinstall. Older setup backups are migrated without losing their original bytes.
 and **Short** uses `├` / `└`, saving one column without removing indentation.
 The config key is `branch_length = "standard"` (default) or `"short"`.
 Single-tab workspaces stay branch-free with either choice.
+
+**Pane name before task** shows a renamed pane as `{pane name} - {task}`, for
+example `architect - Fix landing page`. Panes without a name (set with
+`herdr pane rename`) keep the task alone, and a task that already starts with the
+name is not repeated. The config key is `pane_names = false` (default) or `true`.
 
 Ordering defaults to `order = "workspace"`. Choose `"activity"` to bring working
 workspace groups forward, followed by recent lifecycle activity. Tabs and agents
@@ -79,6 +87,13 @@ inspection and recovery. The helper is intended for one active session at a
 time; other running sessions that share the config may need their own refresh.
 
 ## Windows
+
+The minimum supported Herdr version is **0.9.0**, matching the native machine
+label used by the upstream layout. Isolated Windows sessions with Herdr 0.9.0
+and 0.9.3 verified text-mode installation and reinstallation, refresh, a
+second-tab transition, settings/context panes, doctor, and removal preserving
+user shortcuts. The font build and registration-restoration regression tests
+also pass; live font rendering was not repeated for this update.
 
 Setup records the absolute path of the Python that ran it in `python-path.txt`
 (one UTF-8 line) in the plugin config directory. The hook launcher `run.cmd`
@@ -137,10 +152,10 @@ use the font file's **Install** command and add the Windows Terminal fallback
 [above](#windows). Add this to Ghostty's config, then open a fresh Ghostty process:
 
 ```ini
-font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos
+font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos
 ```
 
-The font uses ten private-use codepoints. Only that range is remapped; your
+The font uses twelve private-use codepoints. Only that range is remapped; your
 regular terminal font remains in use for text. If another mapping overlaps the
 range, resolve it explicitly. Other terminals need their own font fallback or
 codepoint mapping configuration; use text mode if unsure.
@@ -148,6 +163,21 @@ codepoint mapping configuration; use text mode if unsure.
 After a font update, a new window may reuse Ghostty's existing process and cached
 font. On Linux, launch `ghostty --gtk-single-instance=false` for a separate
 process without closing your current windows or Herdr sessions.
+
+## Kimchi
+
+Herdr does not detect Kimchi on its own, so a Kimchi pane has no agent name and
+the sidebar skips it. Copy the reporter into Kimchi's extensions directory, then
+start Kimchi again or run `/reload` in it:
+
+```sh
+mkdir -p ~/.config/kimchi/harness/extensions
+cp integrations/kimchi/herdr-agent-state.ts ~/.config/kimchi/harness/extensions/
+```
+
+The pane then reports `kimchi` with its idle, working and blocked states. Herdr
+accepts `rows_by_agent` only for agents it knows, so the default rows carry one
+`$hs_logo_kimchi` token that colours the Kimchi mark orange.
 
 ## Manual removal
 

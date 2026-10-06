@@ -14,7 +14,7 @@ Callers use these names and never branch on the platform themselves:
   ``size()``, ``clear()``, ``draw(y, x, text, style)``, ``refresh()``, and
   ``key()``. Styles are ``None``, ``"bold"``, or ``"reverse"``; keys are
   ``"up"``, ``"down"``, ``"left"``, ``"right"``, ``"enter"``, ``"escape"``,
-  ``"backspace"``, ``"resize"``, or one typed character.
+  ``"backspace"``, ``"resize"``, ``"page_up"``, ``"page_down"``, or one typed character.
 - ``entry(name)``: this platform's manifest id for a logical action or pane.
 - ``config_home()``, ``font_dir()``, ``ghostty_config()``: default locations;
   ``ghostty_config()`` is ``None`` where setup edits no terminal config.
@@ -43,7 +43,7 @@ else:
 
 # Herdr rejects duplicate action/pane ids even when their platforms differ, so
 # Windows declares its own. Keep this map and herdr-plugin.toml in step.
-_POSIX = {"settings": "settings", "refresh": "refresh", "clear": "clear"}
+_POSIX = {"settings": "settings", "context": "context", "refresh": "refresh", "clear": "clear"}
 ENTRIES = {"linux": _POSIX, "macos": _POSIX,
            "windows": {name: name + "-windows" for name in _POSIX}}
 

@@ -206,7 +206,8 @@ def spawn_detached(argv, log):
 
 ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
 STD_OUTPUT_HANDLE = -11
-SCAN_KEYS = {"H": "up", "P": "down", "K": "left", "M": "right"}
+SCAN_KEYS = {"H": "up", "P": "down", "K": "left", "M": "right",
+             "I": "page_up", "Q": "page_down"}
 KEYS = {"\r": "enter", "\n": "enter", "\x1b": "escape", "\x03": "escape", "\b": "backspace"}
 STYLES = {None: "", "bold": "\x1b[1m", "reverse": "\x1b[7m"}
 

@@ -49,6 +49,7 @@ and follow [manual removal](docs/setup.md#manual-removal).
 | `settings_ui.py` | Settings popup logic over the platform terminal |
 | `sidebar-layout.toml` | Native Herdr rows and colors |
 | `setup_sidebar.py`, `configuration.py` | Installation, backups, removal, checks |
+| `integrations/kimchi/` | Kimchi extension that reports the pane to Herdr as `kimchi` |
 | `tools/`, `assets/`, `font/`, `dist/` | Reproducible icon font and licensed source artwork |
 | `tests/` | Grouping, config preservation, runtime and font contracts |
 

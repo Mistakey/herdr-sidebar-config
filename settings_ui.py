@@ -10,7 +10,9 @@ FIELDS = [("order", "Order", ["workspace", "activity"]),
           ("inactive_after_seconds", "Dim after (minutes)", None),
           ("animated_loaders", "Animated loaders", [False, True]),
           ("loader_style", "Loader style", ["dots", "orbit", "pulse"]),
-          ("branch_length", "Branch length", ["standard", "short"])]
+          ("branch_length", "Branch length", ["standard", "short"]),
+          ("pane_names", "Pane name before task", [False, True]),
+          ("conversation_titles", "Conversation tab titles", [False, True])]
 LABELS = {"auto": "Automatic", "font": "Font", "text": "Text",
           "workspace": "Workspace order", "activity": "Active groups first", False: "Off", True: "On",
           "dots": "Dots", "orbit": "Orbit", "pulse": "Pulse",
@@ -46,6 +48,10 @@ def editor(terminal, path=None, apply=apply_now):
         draw(1, "Sidebar settings", "bold")
         if FIELDS[selected][0] == "animated_loaders":
             draw(2, "On uses extra CPU while agents work.")
+        elif FIELDS[selected][0] == "pane_names":
+            draw(2, "Shows {pane name} - {task} for renamed panes.")
+        elif FIELDS[selected][0] == "conversation_titles":
+            draw(2, "Names generic tabs from saved conversations. No AI calls.")
         elif FIELDS[selected][0] == "loader_style":
             draw(2, {"dots": "Rotating dot trail. Requires Animated loaders: On.",
                      "orbit": "One dot orbiting the cell. Requires loaders: On.",

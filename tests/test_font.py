@@ -23,6 +23,8 @@ EXPECTED_GLYPHS = [
     "kilo",
     "maki",
     "agy",
+    "hermes",
+    "kimchi",
 ]
 EXPECTED_CMAP = {0xE1A0 + offset: name for offset, name in enumerate(EXPECTED_GLYPHS)}
 
@@ -49,7 +51,7 @@ class FontTests(unittest.TestCase):
             font = TTFont(output)
             self.assertEqual(font.getBestCmap(), EXPECTED_CMAP)
             self.assertEqual(font["name"].getDebugName(1), "Herdr Sidebar Logos")
-            for name in ("claude", "codex"):
+            for name in ("claude", "codex", "agy", "hermes", "kimchi"):
                 self.assertEqual(font["hmtx"].metrics[name][0], 600)
                 self.assertGreater(font["glyf"][name].numberOfContours, 0)
 

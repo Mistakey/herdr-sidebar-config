@@ -129,7 +129,7 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertEqual(rows["w1:p1"]["hs_tab"], "main")
         self.assertIsNone(rows["w1:p2"]["hs_tab"])
         self.assertEqual(rows["w1:p3"]["hs_tab"], "\u2800\u2800docs")
-        # Unfocused rows reserve the same cell used by the focus bar.
+        # Provider logos keep a stable leading cell in every selection state.
         self.assertEqual(rows["w1:p1"]["hs_logo"], "├─ \u2800\ue1a1")
         self.assertEqual(rows["w1:p2"]["hs_logo"], "\u2800\u2800└─ \u2800\ue1a0")
         self.assertEqual(rows["w1:p3"]["hs_logo"], "└─ \u2800\ue1a1")
@@ -142,6 +142,52 @@ class SidebarRowsTests(unittest.TestCase):
         self.assertEqual(rows["w1:p2"]["hs_group"], "project")
         self.assertIsNone(rows["w1:p2"]["hs_tab"])
         self.assertIsNone(rows["w1:p3"]["hs_tab"])
+
+    def test_idle_agent_fades_without_dimming_shared_headings_or_working_peer(self):
+        panes = [
+            {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "codex", "agent_status": "idle", "focused": True},
+            {"pane_id": "w1:p2", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "claude", "agent_status": "working"},
+            {"pane_id": "w1:p3", "workspace_id": "w1", "tab_id": "w1:t2"},
+        ]
+        spaces = [{"workspace_id": "w1", "label": "project"}]
+        tabs = {"w1:t1": "main", "w1:t2": "shell"}
+        faded = desired_rows(panes, spaces, tabs, inactive_pane_ids={"w1:p1"})
+        self.assertEqual(faded["w1:p1"]["hs_group"], "project")
+        self.assertEqual(faded["w1:p1"]["hs_tab"], "main")
+        self.assertIsNone(faded["w1:p1"]["hs_idle"])
+        self.assertTrue(faded["w1:p1"]["hs_idle_dim"].startswith("○ "))
+        self.assertIsNone(faded["w1:p1"]["hs_logo_focus"])
+        self.assertNotIn("▌", faded["w1:p1"]["hs_logo_dim"])
+        self.assertTrue(faded["w1:p2"]["hs_working"].startswith("◔ "))
+        self.assertIsNone(faded["w1:p2"]["hs_working_dim"])
+        bright = desired_rows(panes, spaces, tabs)
+        changes = changed_tokens(faded["w1:p1"], bright["w1:p1"])
+        self.assertIsNone(changes["hs_idle_dim"])
+        self.assertIsNone(changes["hs_logo_dim"])
+        self.assertIsNotNone(changes["hs_logo"])
+        self.assertNotIn("hs_logo_focus", changes)
+
+    def test_kimchi_mark_uses_its_own_token_until_it_fades(self):
+        panes = [
+            {"pane_id": "w1:p1", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "kimchi", "agent_status": "working"},
+            {"pane_id": "w1:p2", "workspace_id": "w1", "tab_id": "w1:t1",
+             "agent": "claude", "agent_status": "idle"},
+        ]
+        spaces = [{"workspace_id": "w1", "label": "project"}]
+        rows = desired_rows(panes, spaces, {"w1:t1": "main"})
+        kimchi, claude = rows["w1:p1"], rows["w1:p2"]
+        self.assertTrue(kimchi["hs_logo_kimchi"].endswith("\ue1ab"))
+        self.assertIsNone(kimchi["hs_logo"])
+        self.assertTrue(kimchi["hs_working"].startswith("◔ "))
+        self.assertIsNone(claude["hs_logo_kimchi"])
+        self.assertTrue(claude["hs_logo"].endswith("\ue1a0"))
+        faded = desired_rows(panes, spaces, {"w1:t1": "main"}, inactive_pane_ids={"w1:p1"})["w1:p1"]
+        self.assertIsNone(faded["hs_logo_kimchi"])
+        self.assertTrue(faded["hs_logo_dim"].endswith("\ue1ab"))
+        self.assertEqual(set(faded), set(kimchi))
 
     def test_single_tab_uses_compact_rows_until_a_second_tab_exists(self):
         panes = [

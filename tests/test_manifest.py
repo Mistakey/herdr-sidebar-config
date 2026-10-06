@@ -24,6 +24,11 @@ class ManifestTests(unittest.TestCase):
     def test_supports_every_platform(self):
         self.assertEqual(sorted(MANIFEST["platforms"]), ["linux", "macos", "windows"])
 
+    def test_action_and_pane_ids_are_unique_even_across_platforms(self):
+        for kind in ("actions", "panes"):
+            ids = [entry["id"] for entry in MANIFEST[kind]]
+            self.assertEqual(len(ids), len(set(ids)), kind)
+
     def test_every_hook_is_limited_to_one_platform_family(self):
         for kind in ("events", "startup", "actions", "panes"):
             for entry in MANIFEST[kind]:
@@ -43,7 +48,7 @@ class ManifestTests(unittest.TestCase):
                             for entry in MANIFEST[kind] if entry["platforms"] == platforms}
                 for platform in platforms:
                     ids = host.ENTRIES[platform]
-                    expected = {"panes": ["settings"], "actions": ["settings", "refresh", "clear"]}[kind]
+                    expected = {"panes": ["settings", "context"], "actions": ["settings", "context", "refresh", "clear"]}[kind]
                     self.assertEqual(sorted(declared), sorted(ids[name] for name in expected))
                 # The same logical entry runs the same arguments everywhere.
                 posix = {e["id"]: e["command"][2:] for e in MANIFEST[kind] if e["platforms"] == POSIX}
@@ -52,7 +57,7 @@ class ManifestTests(unittest.TestCase):
                     self.assertEqual(declared[name], posix[host.ENTRIES["linux"][logical]])
 
     def test_posix_ids_are_unchanged(self):
-        self.assertEqual(host.ENTRIES["linux"], {"settings": "settings", "refresh": "refresh", "clear": "clear"})
+        self.assertEqual(host.ENTRIES["linux"], {"settings": "settings", "context": "context", "refresh": "refresh", "clear": "clear"})
         self.assertEqual(host.ENTRIES["macos"], host.ENTRIES["linux"])
 
     def test_current_platform_entry(self):

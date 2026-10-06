@@ -109,7 +109,8 @@ class _Curses:
         self._keys = {curses.KEY_UP: "up", curses.KEY_DOWN: "down", curses.KEY_LEFT: "left",
                       curses.KEY_RIGHT: "right", curses.KEY_ENTER: "enter", "\n": "enter",
                       "\r": "enter", "\x1b": "escape", curses.KEY_BACKSPACE: "backspace",
-                      "\x7f": "backspace", "\b": "backspace", curses.KEY_RESIZE: "resize"}
+                      "\x7f": "backspace", "\b": "backspace", curses.KEY_RESIZE: "resize",
+                      curses.KEY_PPAGE: "page_up", curses.KEY_NPAGE: "page_down"}
 
     def size(self):
         return self._screen.getmaxyx()

@@ -64,6 +64,11 @@ pane's own directory (Pi's fixed `π - <cwd>`) is refused, because the space row
 already shows where the agent is. These are deterministic local heuristics, not conversation
 analysis or a model call.
 
+Saved conversation context extends these exact-session reads to generic tab
+names and a read-only popup. Hibernate records link sleeping conversations to
+the popup without adding rows in Spaces. See
+[saved conversation context](session-context.md) for storage and ownership rules.
+
 ## Token contract
 
 Publisher: `plugin:testy-cool.herdr-sidebar`.
@@ -89,9 +94,14 @@ U+2800, a blank braille cell, preserves indentation through metadata whitespace
 trimming. It is a spacer, not a loader. Herdr's first and continuation rows have
 different native offsets, so the prefix arithmetic is intentional.
 
-`inactivity.py` preserves a quiet start per workspace. Any working agent clears
-it; focus and title changes do not. At 600 seconds, refresh switches the label,
-heading, tab and agent tokens to their dim variants. Native lifecycle symbols
+`inactivity.py` preserves quiet starts per workspace and per idle or unknown
+agent. A working agent clears its own timer and the workspace timer; the other
+agents keep theirs. New or replaced sessions start a fresh quiet period.
+Focus and title changes do not reset these timers. After
+600 seconds, idle or unknown agents dim independently while an active workspace's
+label and shared headings stay bright. Questions and unseen completions retain
+their native marks within active workspaces. A wholly quiet workspace still dims
+its label, headings and all agent rows. Native lifecycle symbols
 in Spaces retain their meaning. `deadline.py` holds a single process lock and
 waits on a wake channel until the earliest deadline. A refresh only probes that
 lock: when it is held, the refresh sends a wake; when it is free, the refresh
@@ -163,7 +173,7 @@ Set `icons` in the plugin config directory's `config.toml`:
 
 | Value | Behavior |
 | --- | --- |
-| `"font"` | Use the bundled U+E1A0–U+E1A8 marks; setup's Ghostty default |
+| `"font"` | Use the bundled U+E1A0–U+E1AB marks; setup's Ghostty default |
 | `"text"` | Use short labels; selected by setup's `--text` |
 | `"auto"` | Default without setup: use font mode if the font is installed (`fc-match` finds the exact family; on Windows, a font registration names it), otherwise text |
 
@@ -194,3 +204,8 @@ repeat installation, doctor, font rendering, and restoration of the original
 files were exercised there. Unit tests also cover single/multiple-tab transitions,
 unchanged metadata, unrelated settings, and refusal to overwrite later edits.
 macOS terminal rendering remains unverified.
+
+For a dated view of the whole system, the operational boundaries, and the
+questions that are still open, see [project knowledge](knowledge/README.md). Its
+facts are checked by `tools/check_knowledge_docs.py`, which the test suite runs as
+well.

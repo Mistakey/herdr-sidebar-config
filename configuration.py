@@ -33,7 +33,7 @@ def settings_binding(text):
 
 
 def dimmable_spaces(spaces):
-    """Replace just the workspace label; retain the user's branches and spacing."""
+    """Retain user rows and spacing; add quiet labels and remove retired context rows."""
     result = copy.deepcopy(spaces or {"rows": [["state_icon", "workspace"], ["branch", "git_status"]]})
     rows = result.get("rows", [["state_icon", "workspace"], ["branch", "git_status"]])
     result["rows"] = []
@@ -41,13 +41,16 @@ def dimmable_spaces(spaces):
         tokens = []
         for token in row:
             name = token if isinstance(token, str) else token.get("token")
+            if name == "$hs_parked":
+                continue
             if name == "workspace":
                 style = {} if isinstance(token, str) else dict(token)
                 tokens += [dict(style, token="$hs_space", dim=False),
                            dict(style, token="$hs_space_dim", dim=True)]
             else:
                 tokens.append(token)
-        result["rows"].append(tokens)
+        if tokens or not row:
+            result["rows"].append(tokens)
     return result
 
 
@@ -195,11 +198,11 @@ def restore_layout(text, original, fragment):
     return result
 
 
-GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1A9=Herdr Sidebar Logos"
+GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos"
 
 
 def ghostty_mapping(text):
-    text = text.replace("U+E1A0-U+E1A8=Herdr Sidebar Logos", "U+E1A0-U+E1A9=Herdr Sidebar Logos")
+    text = re.sub(r"U\+E1A0-U\+E1A[0-9A-F]=Herdr Sidebar Logos", "U+E1A0-U+E1AB=Herdr Sidebar Logos", text)
     if GHOSTTY_MAPPING in text.splitlines():
         return text
     return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + GHOSTTY_MAPPING + "\n"
