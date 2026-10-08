@@ -35,6 +35,7 @@ STABLE_GLYPH_ORDER = (
     "agy",
     "hermes",
     "kimchi",
+    "pi",
 )
 
 

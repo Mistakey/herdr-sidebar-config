@@ -97,10 +97,10 @@ directory in the table above. On Linux, run `fc-cache -f` afterward. Add this to
 Ghostty's config, then open a fresh Ghostty process:
 
 ```ini
-font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos
+font-codepoint-map = U+E1A0-U+E1AC=Herdr Sidebar Logos
 ```
 
-The font uses twelve private-use codepoints. Only that range is remapped; your
+The font uses thirteen private-use codepoints. Only that range is remapped; your
 regular terminal font remains in use for text. If another mapping overlaps the
 range, resolve it explicitly. Other terminals need their own font fallback or
 codepoint mapping configuration; use text mode if unsure.
@@ -123,6 +123,10 @@ cp integrations/kimchi/herdr-agent-state.ts ~/.config/kimchi/harness/extensions/
 The pane then reports `kimchi` with its idle, working and blocked states. Herdr
 accepts `rows_by_agent` only for agents it knows, so the default rows carry one
 `$hs_logo_kimchi` token that colours the Kimchi mark orange.
+
+Pi uses the bundled mark at U+E1AC, or `PI` in text mode. Upgrading an older
+installation requires both the updated plugin and font; rerun setup to replace
+the font and extend Ghostty's existing provider mapping without duplicating it.
 
 ## Manual removal
 
