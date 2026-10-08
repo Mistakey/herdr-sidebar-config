@@ -69,7 +69,7 @@
   ],
   "tools": [
     {"path": "tools/build_font.py", "role": "Deterministic base font from font/codepoints.toml + assets/svg (output dist/HerdrHarnessLogos-Regular.ttf)"},
-    {"path": "tools/build_sidebar_font.py", "role": "Derives the shipped font: enlarges claude/codex/agy, renames the family (output dist/HerdrSidebarLogos-Regular.ttf)"},
+    {"path": "tools/build_sidebar_font.py", "role": "Derives the shipped font: enlarges claude/codex/agy/hermes/kimchi/pi, renames the family (output dist/HerdrSidebarLogos-Regular.ttf)"},
     {"path": "tools/check_knowledge_docs.py", "role": "Validates knowledge-doc links, anchors, placeholders and registry facts"}
   ],
   "preferences": [
@@ -123,13 +123,14 @@
     {"agent": "maki", "codepoint": "E1A8", "text_label": "MAK", "svg": "assets/svg/maki.svg", "layout_accent": null},
     {"agent": "agy", "codepoint": "E1A9", "text_label": "AGY", "svg": "assets/svg/agy.svg", "layout_accent": "#6EA8FE"},
     {"agent": "hermes", "codepoint": "E1AA", "text_label": "HER", "svg": "assets/svg/hermes.svg", "layout_accent": "#F5A623"},
-    {"agent": "kimchi", "codepoint": "E1AB", "text_label": "KCH", "svg": "assets/svg/kimchi.svg", "layout_accent": "#FF521D"}
+    {"agent": "kimchi", "codepoint": "E1AB", "text_label": "KCH", "svg": "assets/svg/kimchi.svg", "layout_accent": "#FF521D"},
+    {"agent": "pi", "codepoint": "E1AC", "text_label": "PI", "svg": "assets/svg/pi.svg", "layout_accent": null}
   ],
   "unknown_agent_mark": "◇",
   "palette": ["#A8ADB9", "#F08080", "#91C788", "#6EA8FE", "#E68A67", "#A78BFA", "#F5A623", "#FF521D"],
   "fonts": [
-    {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.0.0", "sha256": "4a033c7039c458583ef79a84ca4e73f22041ebe23e18cda57c4157e5d1669805", "shipped": true},
-    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "575f010b8e1af5064c9dba76b67209be6561f7c5669349cfdc3da44f9c3012ec", "shipped": false}
+    {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.2.0", "sha256": "81058eb692b202246bd5d1e6c0ded5a9b65cba2d3de18fd3ceecd9955ec83c8e", "shipped": true},
+    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "5d1af3f4e7ec58b7468a27ed7fc9e8f426fd537fe858c15e67ef8cd7dfbf7c7c", "shipped": false}
   ],
   "loader_styles": {"dots": 10, "orbit": 8, "pulse": 12, "frames_per_second": 8},
   "env": [

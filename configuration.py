@@ -198,11 +198,11 @@ def restore_layout(text, original, fragment):
     return result
 
 
-GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos"
+GHOSTTY_MAPPING = "font-codepoint-map = U+E1A0-U+E1AC=Herdr Sidebar Logos"
 
 
 def ghostty_mapping(text):
-    text = re.sub(r"U\+E1A0-U\+E1A[0-9A-F]=Herdr Sidebar Logos", "U+E1A0-U+E1AB=Herdr Sidebar Logos", text)
+    text = re.sub(r"U\+E1A0-U\+E1A[0-9A-F]=Herdr Sidebar Logos", "U+E1A0-U+E1AC=Herdr Sidebar Logos", text)
     if GHOSTTY_MAPPING in text.splitlines():
         return text
     return text.rstrip() + "\n\n# Herdr Sidebar provider icons\n" + GHOSTTY_MAPPING + "\n"

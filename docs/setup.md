@@ -152,13 +152,17 @@ use the font file's **Install** command and add the Windows Terminal fallback
 [above](#windows). Add this to Ghostty's config, then open a fresh Ghostty process:
 
 ```ini
-font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos
+font-codepoint-map = U+E1A0-U+E1AC=Herdr Sidebar Logos
 ```
 
-The font uses twelve private-use codepoints. Only that range is remapped; your
+The font uses thirteen private-use codepoints. Only that range is remapped; your
 regular terminal font remains in use for text. If another mapping overlaps the
 range, resolve it explicitly. Other terminals need their own font fallback or
 codepoint mapping configuration; use text mode if unsure.
+
+Pi uses the bundled mark at U+E1AC, or `PI` in text mode. Upgrading an older
+installation requires both the updated plugin and font; rerun setup to replace
+the font and extend Ghostty's existing provider mapping without duplicating it.
 
 After a font update, a new window may reuse Ghostty's existing process and cached
 font. On Linux, launch `ghostty --gtk-single-instance=false` for a separate
