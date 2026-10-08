@@ -88,6 +88,16 @@ Moonshot AI (https://www.moonshot.ai/).
 
 The complete Apache-2.0 and MIT license texts are included in `assets/licenses/`.
 
+## Hermes
+
+- Source: project-local monochrome identifier at `assets/svg/hermes.svg`; no external artwork source is recorded.
+
+## Kimchi
+
+- Source: `https://kimchi.dev/favicon.svg`, retrieved 2026-10-02. Kimchi is a CAST AI Group, Inc. project.
+- License: the site publishes no license for the mark; it is used only to identify the Kimchi harness.
+- Modification: orange disc removed; the chili outline kept as one monochrome path and scaled for a terminal font.
+
 ## Sidebar Codex mark
 
 The borderless mark in `font/sidebar/codex.svg` comes from

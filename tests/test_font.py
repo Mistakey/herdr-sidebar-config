@@ -25,6 +25,8 @@ EXPECTED_GLYPHS = [
     "kilo",
     "maki",
     "agy",
+    "hermes",
+    "kimchi",
     "pi",
 ]
 EXPECTED_CMAP = {0xE1A0 + offset: name for offset, name in enumerate(EXPECTED_GLYPHS)}
@@ -45,7 +47,7 @@ class FontSourceTests(unittest.TestCase):
 class FontTests(unittest.TestCase):
     def test_sidebar_pi_matches_peer_size_and_alignment(self):
         with TTFont(ROOT / "dist/HerdrSidebarLogos-Regular.ttf") as font:
-            self.assertEqual(font.getBestCmap()[0xE1AA], "pi")
+            self.assertEqual(font.getBestCmap()[0xE1AC], "pi")
             pi = font["glyf"]["pi"]
             width, height = pi.xMax - pi.xMin, pi.yMax - pi.yMin
             center_y = (pi.yMin + pi.yMax) / 2
@@ -93,7 +95,7 @@ class FontTests(unittest.TestCase):
             font = TTFont(output)
             self.assertEqual(font.getBestCmap(), EXPECTED_CMAP)
             self.assertEqual(font["name"].getDebugName(1), "Herdr Sidebar Logos")
-            for name in ("claude", "codex"):
+            for name in ("claude", "codex", "agy", "hermes", "kimchi", "pi"):
                 self.assertEqual(font["hmtx"].metrics[name][0], 600)
                 self.assertGreater(font["glyf"][name].numberOfContours, 0)
 

@@ -8,7 +8,8 @@ import tempfile
 import tomllib
 
 DEFAULTS = {"icons": "auto", "inactive_after_seconds": 600, "order": "workspace",
-            "animated_loaders": False, "loader_style": "dots", "branch_length": "standard"}
+            "animated_loaders": False, "loader_style": "dots", "branch_length": "standard",
+            "pane_names": False, "conversation_titles": False}
 
 
 def settings_path():
@@ -27,6 +28,10 @@ def validate(values):
         raise ValueError("Loader style must be dots, orbit, or pulse.")
     if result["branch_length"] not in ("standard", "short"):
         raise ValueError("Branch length must be standard or short.")
+    if not isinstance(result["pane_names"], bool):
+        raise ValueError("Pane names must be on or off.")
+    if not isinstance(result["conversation_titles"], bool):
+        raise ValueError("Conversation tab titles must be on or off.")
     delay = result["inactive_after_seconds"]
     if isinstance(delay, bool) or not isinstance(delay, (int, float)) or not math.isfinite(delay) or delay <= 0:
         raise ValueError("Dimming delay must be a positive number of minutes.")
@@ -35,7 +40,7 @@ def validate(values):
 
 def load(path=None):
     path = path or settings_path()
-    return validate(tomllib.loads(path.read_text()) if path.exists() else {})
+    return validate(tomllib.loads(path.read_text(encoding="utf-8")) if path.exists() else {})
 
 
 def patch(text, changes):
@@ -67,7 +72,7 @@ def patch(text, changes):
 
 
 def save(path, original, changes):
-    current = path.read_text() if path.exists() else ""
+    current = path.read_text(encoding="utf-8") if path.exists() else ""
     if current != original:
         raise ValueError("Settings changed elsewhere. Close and reopen this popup.")
     result = patch(original, changes)
@@ -76,7 +81,7 @@ def save(path, original, changes):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
-        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as stream:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as stream:
             temporary = Path(stream.name)
             stream.write(result)
         temporary.chmod(path.stat().st_mode & 0o777 if path.exists() else 0o600)

@@ -10,7 +10,7 @@ except ImportError:
 
 def build(output=None):
     font = TTFont(ROOT / "dist/HerdrHarnessLogos-Regular.ttf")
-    for name in ("claude", "codex", "agy", "pi"):
+    for name in ("claude", "codex", "agy", "hermes", "kimchi", "pi"):
         source = ROOT / (
             "font/sidebar/codex.svg" if name == "codex" else f"assets/svg/{name}.svg"
         )

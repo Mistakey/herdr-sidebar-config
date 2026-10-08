@@ -15,17 +15,24 @@ Titles and states are demonstration data; the plugin and rendering are real.
 
 - **Find the right agent.** One-tab workspaces stay compact; multiple tabs get a
   tree. Working groups can move to the top without separating their agents.
+- **Tell machines apart.** When you connect another machine, each agent row shows
+  its machine name. A local-only session keeps the current compact rows. Install
+  the plugin on the other machine too if you want its task labels and grouping.
 - **Read the task.** Uses native conversation titles and local fallbacks—not
   another model call.
-- **Recognize Antigravity (AGY).** Its own icon and blue agent text replace the
-  generic diamond. Inactive rows still dim; blocked and done retain status colors.
+- **Recognize Antigravity (AGY), Hermes and Kimchi.** Their own icons and labels
+  replace the generic diamond; AGY uses blue agent text and Hermes a warm amber mark.
+  Kimchi has to report itself to Herdr first; see [setup](docs/setup.md#kimchi).
+  Inactive rows still dim; blocked and done retain status colors.
 - **Animated loaders show who's working.** Choose Dots, Orbit, or Pulse in
   Settings. Animation is off by default; turn it off again to restore static
   status marks and stop animation redraws.
 - **Inactive spaces and agents fade into the background.** After a workspace
   has no working agents for ten minutes, its name in **Spaces** and its heading
-  and agent rows in **Agents** dim together. They brighten as soon as any agent
-  in that workspace starts working. Change the delay in Settings. This is visual
+  and agent rows in **Agents** dim together. Idle agents also fade independently
+  while another agent in the workspace works; questions and unseen completions
+  stay visible. Each agent brightens when it starts working, along with its
+  workspace. Change the delay in Settings. This is visual
   dimming—not hibernation or stopping agents.
 
 ### Before and after
@@ -38,8 +45,9 @@ Titles and states are demonstration data; the plugin and rendering are real.
 
 ## Install
 
-Requires **Herdr 0.8.2+**, **Python 3.11+**, and Git. Icon setup targets **Ghostty
-on Linux or macOS**. Linux/Ghostty is live-tested; macOS is not yet live-tested.
+Requires **Herdr 0.9.0+**, **Python 3.11+**, and Git. Icon setup targets **Ghostty
+on Linux or macOS** and **Windows Terminal on Windows**. Linux/Ghostty is
+live-tested; macOS is not yet live-tested.
 
 Run inside a Herdr terminal pane:
 
@@ -56,6 +64,13 @@ your still-running Herdr session. A new tab alone may retain the old font cache.
 **Another terminal, or no font changes?** Use `python3 setup_sidebar.py install --text`
 instead. Providers use short text labels; no Ghostty restart is needed for a font.
 To inspect changes first, add `--dry-run` to the install command.
+
+**Windows:** run the same commands with `python` (or `py -3`) in place of
+`python3`. Setup installs the font for your user only and records the Python it
+ran with for the plugin's hooks. It does not edit Windows Terminal's settings:
+append `, Herdr Sidebar Logos` to each profile's **Font face** (Settings →
+Profile → Appearance), then open a new Windows Terminal window. Doctor reports
+whether that fallback is present. [Windows details →](docs/setup.md#windows)
 
 Setup backs up the files it changes and preserves unrelated Herdr settings.
 It replaces the agent-row layout and sets workspace sorting. Keep this checkout:
@@ -115,10 +130,13 @@ python3 setup_sidebar.py uninstall --dry-run
 python3 setup_sidebar.py uninstall
 ```
 
-Removal keeps your checkout and preferences. Setup refuses to overwrite managed
-files edited since installation. [Keeping custom edits and troubleshooting →](docs/setup.md)
+Removal keeps your checkout and preferences. Later edits to your Herdr config,
+such as a new theme, survive repeat installs and removal; setup refuses to
+overwrite other managed files edited since installation. [Keeping custom edits and troubleshooting →](docs/setup.md)
 
 Contributing? Start with [AGENTS.md](AGENTS.md) and the [architecture guide](docs/architecture.md).
+The [project knowledge set](docs/knowledge/README.md) records what is authoritative,
+what was verified, and what is still open.
 
 ## Credits and license
 

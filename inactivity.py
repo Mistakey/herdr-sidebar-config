@@ -1,4 +1,4 @@
-"""Track workspace quiet periods without polling or changing native agent state."""
+"""Track workspace and agent quiet periods without polling or changing native state."""
 
 from dataclasses import dataclass
 import math
@@ -8,6 +8,7 @@ import math
 class InactivityResult:
     state: dict
     inactive_ids: frozenset[str]
+    inactive_pane_ids: frozenset[str]
     next_deadline: float | None
 
 
@@ -27,9 +28,9 @@ def update_inactivity(workspace_ids, panes, previous=None, *, now, timeout=600.0
     useful across short-lived refresh processes and restarts. The caller should
     schedule one wake at the deadline, then obtain a fresh snapshot and call this
     function again. Agent-status events call it immediately. No callback is
-    needed once every quiet workspace is inactive or every workspace is working.
+    needed once every quiet workspace and agent is inactive.
 
-    With no valid saved state, quiet workspaces start their ten-minute period at
+    With no valid saved state, quiet workspaces and agents start their period at
     the first observation. A backwards clock jump restarts the period rather than
     trusting future timestamps. No focus or title field affects the timer.
     """
@@ -42,6 +43,7 @@ def update_inactivity(workspace_ids, panes, previous=None, *, now, timeout=600.0
     previous = previous if isinstance(previous, dict) else {}
     observed_at = previous.get("observed_at")
     old_quiet = previous.get("quiet_since")
+    old_panes = previous.get("pane_quiet_since")
     if (
         previous.get("version") != 1
         or not _timestamp(observed_at)
@@ -49,6 +51,9 @@ def update_inactivity(workspace_ids, panes, previous=None, *, now, timeout=600.0
         or not isinstance(old_quiet, dict)
     ):
         old_quiet = {}
+        old_panes = {}
+    if not isinstance(old_panes, dict):
+        old_panes = {}
 
     working = {
         pane.get("workspace_id")
@@ -69,8 +74,34 @@ def update_inactivity(workspace_ids, panes, previous=None, *, now, timeout=600.0
         else:
             deadlines.append(deadline)
 
+    pane_quiet_since = {}
+    inactive_pane_ids = set()
+    for pane in panes:
+        pane_id = pane.get("pane_id")
+        # Questions and unseen completions still need attention. Their native
+        # marks stay bright within an active workspace.
+        if (not pane_id or pane.get("workspace_id") not in workspace_ids
+                or not pane.get("agent")
+                or pane.get("agent_status", "unknown") not in {"idle", "unknown"}):
+            continue
+        session = pane.get("agent_session")
+        session = session if isinstance(session, dict) else {}
+        identity = [pane["agent"], pane.get("terminal_id"), session.get("kind"), session.get("value")]
+        old = old_panes.get(pane_id)
+        start = old.get("since") if isinstance(old, dict) and old.get("identity") == identity else None
+        if not _timestamp(start) or start > now or start > observed_at:
+            start = now
+        pane_quiet_since[pane_id] = {"since": float(start), "identity": identity}
+        deadline = start + timeout
+        if now >= deadline:
+            inactive_pane_ids.add(pane_id)
+        else:
+            deadlines.append(deadline)
+
     return InactivityResult(
-        state={"version": 1, "observed_at": now, "quiet_since": quiet_since},
+        state={"version": 1, "observed_at": now, "quiet_since": quiet_since,
+               "pane_quiet_since": pane_quiet_since},
         inactive_ids=frozenset(inactive_ids),
+        inactive_pane_ids=frozenset(inactive_pane_ids),
         next_deadline=min(deadlines, default=None),
     )

@@ -9,8 +9,9 @@ class AgyIconTests(unittest.TestCase):
         self.assertEqual(logo_for('agy', 'text'), 'AGY')
 
     def test_upgrade_mapping_without_duplicates(self):
-        old = 'font-codepoint-map = U+E1A0-U+E1A8=Herdr Sidebar Logos\n'
-        updated = ghostty_mapping(old)
-        self.assertEqual(updated.count('font-codepoint-map'), 1)
-        self.assertIn(GHOSTTY_MAPPING, updated)
-        self.assertEqual(ghostty_mapping(updated), updated)
+        for last in ('E1A8', 'E1A9', 'E1AA', 'E1AB'):
+            old = f'font-codepoint-map = U+E1A0-U+{last}=Herdr Sidebar Logos\n'
+            updated = ghostty_mapping(old)
+            self.assertEqual(updated.count('font-codepoint-map'), 1)
+            self.assertIn(GHOSTTY_MAPPING, updated)
+            self.assertEqual(ghostty_mapping(updated), updated)
