@@ -122,7 +122,7 @@
   "palette": ["#A8ADB9", "#F08080", "#91C788", "#6EA8FE", "#E68A67", "#A78BFA", "#F5A623", "#FF521D"],
   "fonts": [
     {"path": "dist/HerdrSidebarLogos-Regular.ttf", "family": "Herdr Sidebar Logos", "version": "1.2.0", "sha256": "81058eb692b202246bd5d1e6c0ded5a9b65cba2d3de18fd3ceecd9955ec83c8e", "shipped": true},
-    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.2.0", "sha256": "5d1af3f4e7ec58b7468a27ed7fc9e8f426fd537fe858c15e67ef8cd7dfbf7c7c", "shipped": false}
+    {"path": "dist/HerdrHarnessLogos-Regular.ttf", "family": "Herdr Harness Logos", "version": "1.3.0", "sha256": "5d1af3f4e7ec58b7468a27ed7fc9e8f426fd537fe858c15e67ef8cd7dfbf7c7c", "shipped": false}
   ],
   "loader_styles": {"dots": 10, "orbit": 8, "pulse": 12, "frames_per_second": 8},
   "env": [
