@@ -103,7 +103,7 @@ updates and removal; the installer writes only the `icons` key when it is absent
 
 ## Provider marks
 
-Twelve provider marks ship in the private use area U+E1A0–U+E1AB, in a fixed order
+Thirteen provider marks ship in the private use area U+E1A0–U+E1AC, in a fixed order
 that the font build enforces. Five of them get a per-provider color in the
 shipped layout; every other mapped agent uses the neutral rows, and any unmapped
 agent renders `◇`.
@@ -122,9 +122,10 @@ agent renders `◇`.
 | U+E1A9 | agy | `AGY` | `#6EA8FE` |
 | U+E1AA | hermes | `HER` | `#F5A623` |
 | U+E1AB | kimchi | `KCH` | `#FF521D` |
+| U+E1AC | pi | `PI` | — |
 
 Fonts: `dist/HerdrSidebarLogos-Regular.ttf` (family "Herdr Sidebar Logos", the
-file setup installs; `claude`, `codex`, `agy`, `hermes` and `kimchi` are redrawn larger) and
+file setup installs; `claude`, `codex`, `agy`, `hermes`, `kimchi` and `pi` are redrawn larger) and
 `dist/HerdrHarnessLogos-Regular.ttf` (family "Herdr Harness Logos", the build
 intermediate). Hashes and glyph metrics are in [registry.json](registry.json).
 
@@ -136,7 +137,7 @@ Herdr ships display tokens into an icon font, so the rendering styles available 
 | --- | --- |
 | Hooks | 1 startup (`--restore-view`), 1 pane (`settings` popup), 3 actions (`settings`, `refresh`, `clear`), 14 events, deliberately no `pane.updated` |
 | Setup CLI | `install` / `uninstall` / `doctor` with `--dry-run`, `--json`, `--text`, `--config`, `--ghostty-config`, `--font-dir`, `--state-dir`; exit 0 success, 1 error or doctor warning, 2 bad arguments; statuses `planned`, `installed`, `removed`, `ok`, `needs_attention`, `error` |
-| Managed files | the Herdr layout, the plugin preferences file, the Ghostty config line `font-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos`, and the installed font (the last two are skipped with `--text`) |
+| Managed files | the Herdr layout, the plugin preferences file, the Ghostty config line `font-codepoint-map = U+E1A0-U+E1AC=Herdr Sidebar Logos`, and the installed font (the last two are skipped with `--text`) |
 | Backup record | `<state dir>/install.json`: per-file `before` (base64 original or null), `installed_sha256`, optional `user_editable`; renamed to `uninstalled.json` after removal |
 | Doctor checks | `plugin_enabled`, `layout_matches`, `workspace_dimming`, `workspace_sort`, `latest_hook_succeeded`, `preferences_valid`, `icon_mode_valid`, plus `font_installed` and `ghostty_mapping` in font mode |
 | Runtime environment | `HERDR_PLUGIN_STATE_DIR`, `HERDR_PLUGIN_CONFIG_DIR`, `HERDR_PLUGIN_ID`, `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH`, `HERDR_ENV`, `HERDR_CONFIG_PATH`, `XDG_CONFIG_HOME`, `CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `PI_CODING_AGENT_DIR` |

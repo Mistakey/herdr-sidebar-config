@@ -9,6 +9,15 @@ from sidebar import desired_rows, task_label
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_pi_has_a_visible_row_in_font_and_text_modes(self):
+        pane = {"pane_id": "p1", "workspace_id": "w1", "tab_id": "t1",
+                "agent": "pi", "agent_status": "idle", "name": "Pi review"}
+        for mode, logo in (("font", "\ue1ac"), ("text", "PI")):
+            with self.subTest(mode=mode):
+                values = desired_rows([pane], [{"workspace_id": "w1", "label": "project"}], {}, mode)["p1"]
+                self.assertEqual(values["hs_logo"], "\u2800" + logo)
+                self.assertEqual(values["hs_idle"], "○ Pi review")
+
     def test_text_mode_needs_no_font_and_auto_degrades(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, {"HERDR_PLUGIN_CONFIG_DIR": directory}):
