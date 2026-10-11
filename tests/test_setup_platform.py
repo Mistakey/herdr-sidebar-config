@@ -191,6 +191,21 @@ class WindowsFontTests(unittest.TestCase):
         args.dry_run, args.json = False, True
         return args
 
+    def test_unregister_preserves_a_later_registration(self):
+        for prior in (None, str(self.font.parent / "previous.ttf")):
+            with self.subTest(prior=prior):
+                later = self.font.parent / "later.ttf"
+                self.host_windows.register_font(later, FONT_FAMILY)
+                self.host_windows.unregister_font(self.font, FONT_FAMILY, prior)
+                self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(later)})
+
+    def test_unregister_restores_previous_registration_after_release(self):
+        prior = self.font.parent / "previous.ttf"
+        self.host_windows.register_font(self.font, FONT_FAMILY)
+        self.host_windows.unregister_font(self.font, FONT_FAMILY)
+        self.host_windows.unregister_font(self.font, FONT_FAMILY, str(prior))
+        self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(prior)})
+
     def _setup_api(self):
         stack = ExitStack()
         self.addCleanup(stack.close)
@@ -228,6 +243,20 @@ class WindowsFontTests(unittest.TestCase):
         invoke.side_effect = None
         setup_sidebar.uninstall(args, "herdr")
         self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(prior)})
+
+    def test_uninstall_preserves_a_later_font_registration(self):
+        for original in (None, self.font.parent / "previous.ttf"):
+            with self.subTest(original=original):
+                if original is not None:
+                    self.host_windows.register_font(original, FONT_FAMILY)
+                args = self._setup_args()
+                self._setup_api()
+                setup_sidebar.install(args, "herdr")
+                later = self.font.parent / "later.ttf"
+                self.host_windows.register_font(later, FONT_FAMILY)
+                setup_sidebar.uninstall(args, "herdr")
+                self.assertEqual(self.font.read_bytes(), b"font")
+                self.assertEqual(self._values(), {"Herdr Sidebar Logos Regular (TrueType)": str(later)})
 
     def test_registration_failure_then_retry_keeps_the_first_backup(self):
         prior = self.font.parent / "previous.ttf"

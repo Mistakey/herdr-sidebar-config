@@ -1,4 +1,5 @@
 """Platform layer contracts, exercised with this platform's real primitives."""
+import io
 import json
 import os
 from pathlib import Path
@@ -97,6 +98,25 @@ class SpawnTests(unittest.TestCase):
             worker = host.spawn_detached([sys.executable, "-c", "print('worker ran')"], log)
             self.assertEqual(worker.wait(10), 0)
             self.assertIn("worker ran", log.read_text(encoding="utf-8"))
+
+
+@unittest.skipUnless(os.name == "nt", "Windows VT console")
+class WindowsConsoleTests(unittest.TestCase):
+    def test_draw_treats_control_characters_as_text_not_terminal_commands(self):
+        import host_windows
+        stream = io.StringIO()
+        console = host_windows._Console(stream)
+        console.draw(1, 2, "失败\x1b[2J\x1b]0;title\x07\r\n\t\x00\x7f\x9b31m", "bold")
+        console.refresh()
+        self.assertEqual(stream.getvalue(), "\x1b[2;3H\x1b[1m失败[2J]0;title31m\x1b[0m")
+
+    def test_draw_preserves_unicode_and_console_styles(self):
+        import host_windows
+        stream = io.StringIO()
+        console = host_windows._Console(stream)
+        console.draw(0, 0, "↑↓ 中文 ├─ ⠀\ue1ac", "reverse")
+        console.refresh()
+        self.assertEqual(stream.getvalue(), "\x1b[1;1H\x1b[7m↑↓ 中文 ├─ ⠀\ue1ac\x1b[0m")
 
 
 def reply_to(line):

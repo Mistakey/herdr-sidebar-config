@@ -231,6 +231,7 @@ class _Console:
         self._buffer.append("\x1b[H\x1b[2J")
 
     def draw(self, y, x, text, style=None):
+        text = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", text)
         self._buffer.append(f"\x1b[{y + 1};{x + 1}H{STYLES[style]}{text}\x1b[0m")
 
     def refresh(self):
@@ -331,16 +332,17 @@ def register_font(path, family):
 
 
 def unregister_font(path, family, prior=None):
-    """Put back ``prior``, or drop a registration naming ``path``."""
+    """Restore a released or owned registration without replacing a later path."""
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, FONTS_KEY) as key:
-        if prior is not None:
-            winreg.SetValueEx(key, _value_name(family), 0, winreg.REG_SZ, prior)
-            return
         try:
             current = winreg.QueryValueEx(key, _value_name(family))[0]
         except FileNotFoundError:
+            current = None
+        if current is not None and os.path.normcase(current) != os.path.normcase(str(path)):
             return
-        if os.path.normcase(current) == os.path.normcase(str(path)):
+        if prior is not None:
+            winreg.SetValueEx(key, _value_name(family), 0, winreg.REG_SZ, prior)
+        elif current is not None:
             winreg.DeleteValue(key, _value_name(family))
 
 

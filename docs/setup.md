@@ -18,7 +18,7 @@ herdr plugin action invoke settings --plugin testy-cool.herdr-sidebar
 ```
 
 On Windows, Herdr needs distinct action ids per platform, so every action in
-this guide ends in `-windows`: `settings-windows`, `refresh-windows`, and
+this guide ends in `-windows`: `settings-windows`, `refresh-windows`,
 `clear-windows`, and `context-windows`.
 
 Plugin preferences are user-owned. Updates retain them, `--text` explicitly
