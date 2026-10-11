@@ -1,5 +1,12 @@
 # Third-Party Mark Notices
 
+## Pi
+
+- Source: Earendil `pi`, `packages/coding-agent/src/modes/interactive/components/pi-logo.ts`, commit `428a12bc775145afa342530a9eaa652efb3e4422`.
+- License: MIT, Copyright (c) 2025 Mario Zechner; included in `assets/licenses/pi-MIT.txt`.
+- Modification: the terminal logo's pixel geometry was converted to monochrome SVG paths and scaled for the terminal font; the coral, blue, and yellow colors were removed.
+- Upstream source and license: <https://github.com/earendil-works/pi/blob/428a12bc775145afa342530a9eaa652efb3e4422/packages/coding-agent/src/modes/interactive/components/pi-logo.ts>, <https://github.com/earendil-works/pi/blob/428a12bc775145afa342530a9eaa652efb3e4422/LICENSE>.
+
 ## Antigravity (AGY)
 
 - Source: https://github.com/lobehub/lobe-icons/blob/master/packages/static-svg/icons/antigravity.svg

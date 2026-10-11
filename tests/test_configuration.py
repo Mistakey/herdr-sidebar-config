@@ -87,6 +87,15 @@ command = "my-action"
         self.assertTrue(result.startswith(original.rstrip()))
         self.assertEqual(ghostty_mapping(result), result)
 
+    def test_font_mapping_upgrades_to_include_pi(self):
+        original = "font-size = 16\nfont-codepoint-map = U+E1A0-U+E1AB=Herdr Sidebar Logos\n"
+        expected = original.replace("U+E1AB", "U+E1AC")
+        self.assertEqual(ghostty_mapping(original), expected)
+
+    def test_font_mapping_does_not_downgrade_pi(self):
+        original = "font-size = 16\nfont-codepoint-map = U+E1A0-U+E1AC=Herdr Sidebar Logos\n"
+        self.assertEqual(ghostty_mapping(original), original)
+
     def test_restore_keeps_later_edits_and_undoes_only_the_sidebar(self):
         original = '''# personal theme
 [theme]
